@@ -1,5 +1,6 @@
 package com.jiangdg.demo
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +15,8 @@ class MultiCameraDialog : BaseBottomDialog() {
     private lateinit var mViewBinding: DialogMultiCamerasBinding
 
     override fun initView() {
+        Log.d("Keerthi","12");
+
         mViewBinding.multiCameraDialogHide.setOnClickListener {
             hide()
         }

@@ -63,6 +63,14 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
     }
 
+    fun isUsbHostSupported(context: Context): Boolean {
+        val packageManager = context.packageManager
+            return packageManager.hasSystemFeature(PackageManager.FEATURE_USB_HOST)
+    }
+    fun isOtgSupported(context: Context): Boolean {
+        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
+        return usbManager != null && isUsbHostSupported(context)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStatusBar()
@@ -71,22 +79,23 @@ class MainActivity : AppCompatActivity() {
         val (screenWidth, screenHeight) = getScreenDimensions(this)
         try {
             // Check if USB debugging is enabled
-            val adbEnabled = Settings.Global.getInt(
-                this.contentResolver,
-                Settings.Global.ADB_ENABLED,
-                0
-            ) == 1
 
-            if (!adbEnabled) {
-                // USB debugging is not enabled
-                Toast.makeText(this, "USB / OTG Debugging is not enabled. Redirecting to settings...", Toast.LENGTH_LONG).show()
+            //                startActivity(Intent(Settings.ACTION_SETTINGS))
 
-                // Create an intent to open the developer options settings page
-                startActivity(Intent(Settings.ACTION_SETTINGS))
 
-            } else {
-                Toast.makeText(this, "USB Debugging is enabled.", Toast.LENGTH_SHORT).show()
 
+
+            if(isUsbHostSupported(this)){
+                //ToastUtils.show("USB  HOSTING SUPPORTED")
+            }else{
+               // ToastUtils.show("USB HOSTING NOT SUPPORTED")
+            }
+
+            if(isOtgSupported(this)){
+               // ToastUtils.show("OTP SUPPORTED")
+            }else{
+              //  ToastUtils.show("OTP NOT SUPPORTED")
+            }
                 val camera = Camera.open()
                 val previewSizes = camera.parameters.supportedPreviewSizes
                 val optimalSize = getOptimalPreviewSize(previewSizes, screenWidth, screenHeight)
@@ -116,19 +125,18 @@ class MainActivity : AppCompatActivity() {
                     replaceDemoFragment(DemoFragment())
 
                 }
-            }
+            //}
         } catch (e: Exception) {
             Log.e("CheckUsbDebugging", "Error checking USB debugging status", e)
-            Toast.makeText(this, "An error occurred while checking USB Debugging status.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Enable OTG Connection in Setting "+e.message, Toast.LENGTH_LONG).show()
+            startActivity(Intent(Settings.ACTION_SETTINGS))
         }
 
 
      }
 
 
-    public fun checkAndPromptForOTG(context: Context) {
 
-    }
 
 
     private fun requestManageExternalStoragePermission() {

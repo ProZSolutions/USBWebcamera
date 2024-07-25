@@ -91,6 +91,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     private var mMoreMenu: PopupWindow? = null
     private var isCapturingVideoOrAudio: Boolean = false
     private var isPlayingMic: Boolean = false
+    private var isPause: Boolean = false
     private var mRecTimer: Timer? = null
     private var mRecSeconds = 0
     private var mRecMinute = 0
@@ -174,6 +175,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         mViewBinding.captureBtn.setOnViewClickListener(this)
         mViewBinding.albumPreviewIv.setTheme(PreviewImageView.Theme.DARK)
         mViewBinding.screenShot.setOnClickListener(this)
+       // mViewBinding.pauseBtn.setOnClickListener(this)
 
 
 
@@ -301,6 +303,21 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         mViewBinding.screenShot.setOnClickListener {
             captureImage()
         }
+/*
+        mViewBinding.pauseBtn.setOnClickListener{
+            if(isPause){
+                isPause=false
+                isCapturingVideoOrAudio = true
+                startMediaTimer()
+                mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.DOING)
+            }else{
+                stopMediaTimer()
+                isPause=true
+                isCapturingVideoOrAudio = false
+                mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.PAUSE)
+            }
+        }
+*/
         mViewBinding.takePictureModeTv.setOnClickListener {
             if (mCameraMode == CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC) {
                 return@setOnClickListener
@@ -406,6 +423,8 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         }
         captureVideoStart(object : ICaptureCallBack {
             override fun onBegin() {
+                Log.d("Keerthi","Demo Frag begin");
+
                 isCapturingVideoOrAudio = true
                 mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.DOING)
                 mViewBinding.modeSwitchLayout.visibility = View.GONE
@@ -415,6 +434,8 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 mViewBinding.recTimerLayout.visibility = View.VISIBLE
                 startMediaTimer()
             }
+
+
 
             override fun onError(error: String?) {
                 ToastUtils.show(error ?: "未知异常")
@@ -949,7 +970,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     private fun stopMediaTimer() {
         if (mRecTimer != null) {
             mRecTimer?.cancel()
-            mRecTimer = null
+             mRecTimer = null
         }
         mRecHours = 0
         mRecMinute = 0

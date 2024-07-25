@@ -18,6 +18,7 @@ package com.jiangdg.demo
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.Typeface
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -51,6 +52,8 @@ class EffectListDialog(activity: Activity) : BaseDialog(activity, portraitWidthR
     override fun getContentLayoutId(): Int = R.layout.dialog_effects
 
     init {
+        Log.d("Keerthi","10");
+
         mDialog.window?.let {
             it.setGravity(Gravity.BOTTOM)
             it.setWindowAnimations(R.style.camera2_anim_down_to_top)
@@ -101,6 +104,8 @@ class EffectListDialog(activity: Activity) : BaseDialog(activity, portraitWidthR
     private fun getCurAnimationId() = MMKVUtils.getInt(KEY_ANIMATION, CameraEffect.ID_NONE_ANIMATION)
 
     private fun initEffectTabs() {
+        Log.d("Keerthi","11");
+
         getCurAnimationId().let { curAnimId ->
             if (curAnimId != CameraEffect.ID_NONE_ANIMATION) {
                 mAnimTabBtn?.typeface = Typeface.DEFAULT_BOLD

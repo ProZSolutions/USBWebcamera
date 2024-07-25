@@ -2,6 +2,7 @@ package com.jiangdg.demo
 
 import android.content.Context
 import android.hardware.usb.UsbDevice
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,20 +26,29 @@ import com.jiangdg.demo.databinding.FragmentMultiCameraBinding
 class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
     private lateinit var mAdapter: CameraAdapter
     private lateinit var mViewBinding: FragmentMultiCameraBinding
+
     private val mCameraList by lazy {
+        Log.d("Keerthi","1");
+
         ArrayList<MultiCameraClient.ICamera>()
     }
     private val mHasRequestPermissionList by lazy {
+        Log.d("Keerthi","2");
+
         ArrayList<MultiCameraClient.ICamera>()
     }
 
     override fun onCameraAttached(camera: MultiCameraClient.ICamera) {
+        Log.d("Keerthi","3");
+
         mAdapter.data.add(camera)
         mAdapter.notifyItemInserted(mAdapter.data.size - 1)
         mViewBinding.multiCameraTip.visibility = View.GONE
     }
 
     override fun onCameraDetached(camera: MultiCameraClient.ICamera) {
+        Log.d("Keerthi","4");
+
         mHasRequestPermissionList.remove(camera)
         for ((position, cam) in mAdapter.data.withIndex()) {
             if (cam.getUsbDevice().deviceId == camera.getUsbDevice().deviceId) {
@@ -54,10 +64,14 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
     }
 
     override fun generateCamera(ctx: Context, device: UsbDevice): MultiCameraClient.ICamera {
+        Log.d("Keerthi","5");
+
         return CameraUVC(ctx, device)
     }
 
     override fun onCameraConnected(camera: MultiCameraClient.ICamera) {
+        Log.d("Keerthi","6");
+
         for ((position, cam) in mAdapter.data.withIndex()) {
             if (cam.getUsbDevice().deviceId == camera.getUsbDevice().deviceId) {
                 val textureView = mAdapter.getViewByPosition(position, R.id.multi_camera_texture_view)
@@ -78,6 +92,8 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
     }
 
     override fun onCameraDisConnected(camera: MultiCameraClient.ICamera) {
+        Log.d("Keerthi","7");
+
         camera.closeCamera()
     }
 
@@ -87,6 +103,8 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
         code: ICameraStateCallBack.State,
         msg: String?
     ) {
+        Log.d("Keerthi","8");
+
         if (code == ICameraStateCallBack.State.ERROR) {
             ToastUtils.show(msg ?: "open camera failed.")
         }
@@ -102,6 +120,8 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
     override fun initView() {
         super.initView()
         openDebug(true)
+        Log.d("Keerthi","9");
+
         mAdapter = CameraAdapter()
         mAdapter.setNewData(mCameraList)
         mAdapter.bindToRecyclerView(mViewBinding.multiCameraRv)

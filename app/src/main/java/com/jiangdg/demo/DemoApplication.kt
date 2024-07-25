@@ -16,6 +16,7 @@
 package com.jiangdg.demo
 
 import android.content.Context
+import android.util.Log
 import androidx.multidex.MultiDex
 import com.jiangdg.ausbc.base.BaseApplication
 import com.jiangdg.utils.MMKVUtils
@@ -34,6 +35,8 @@ class DemoApplication: BaseApplication() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.d("Keerthi","DemoApplication");
+
         // init bugly library
         CrashReport.initCrashReport(this, "9baa0e3fac", true)
         MMKVUtils.init(this)

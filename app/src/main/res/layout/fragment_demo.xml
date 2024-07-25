@@ -198,7 +198,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/recTimerLayout"
         android:visibility="gone"
-        android:layout_width="wrap_content"
+         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
          app:layout_constraintEnd_toEndOf="@+id/controlPanelLayout"
         app:layout_constraintStart_toStartOf="@+id/controlPanelLayout"
@@ -228,15 +228,15 @@
             app:layout_constraintTop_toTopOf="parent" />
         <ImageView
         android:id="@+id/screenShot"
-            android:layout_marginLeft="10dp"
+        android:layout_marginLeft="10dp"
         android:layout_width="25dp"
         android:layout_height="25dp"
         android:scaleType="centerCrop"
-            app:tint="@color/white"
+        app:tint="@color/white"
         android:src="@drawable/photo_capture"
         app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/recTimeTv"
-            app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintStart_toEndOf="@id/recTimeTv"
+        app:layout_constraintTop_toTopOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
