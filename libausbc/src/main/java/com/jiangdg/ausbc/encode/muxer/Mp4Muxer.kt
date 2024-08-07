@@ -21,18 +21,24 @@ import android.media.MediaCodec
 import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
 import android.media.MediaMuxer
+import android.net.Uri
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.text.format.DateUtils
 import android.util.Log
+import androidx.core.content.FileProvider
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.MediaUtils
 import com.jiangdg.ausbc.utils.ToastUtils
 import com.jiangdg.ausbc.utils.Utils
 import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.lang.Exception
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
@@ -76,10 +82,12 @@ class Mp4Muxer(
         SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
     }
     private val mCameraDir by lazy {
+        Log.d("FilePathrror"," mp4 fun calle ")
         "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/ProzUSBCamera"
     }
 
     init {
+        Log.d("Keerthi","mp4muxer");
         this.mCaptureCallBack = callBack
         this.mContext= context
         try {
@@ -87,6 +95,7 @@ class Mp4Muxer(
                 val date = mDateFormat.format(System.currentTimeMillis())
                 path = "$mCameraDir/VID_JJCamera_$date"
             }
+            Log.d("FilePathrror"," mp4 mu "+path);
             mOriginalPath = path
             path = "${path}.mp4"
             ToastUtils.show(path!!);
@@ -105,6 +114,7 @@ class Mp4Muxer(
      */
     @Synchronized
     fun addTracker(mediaFormat: MediaFormat?, isVideo: Boolean) {
+        Log.d("Keerthi","djkdvsbdsvikdafjkdfjkadjkd");
         if (isMuxerStarter() || mediaFormat == null) {
             return
         }
@@ -161,6 +171,7 @@ class Mp4Muxer(
      */
     @Synchronized
     fun pumpStream(outputBuffer: ByteBuffer, bufferInfo: MediaCodec.BufferInfo, isVideo: Boolean) {
+        Log.d("Keerthi","16ffj sdk ks");
         try {
             if (!isMuxerStarter()) {
                 return
@@ -191,6 +202,7 @@ class Mp4Muxer(
     }
 
     private fun saveNewFileIfNeed() {
+        Log.d("Keerthi","1kjbewiuubk vdaibbkj ew6");
         try {
             val endMillis = System.currentTimeMillis()
             if (durationInSec == 0L) {
@@ -226,8 +238,9 @@ class Mp4Muxer(
      */
     @Synchronized
     fun release() {
+        Log.d("Keerthi","mv skg , msdkj k v ");
         try {
-            mMediaMuxer?.stop()
+             mMediaMuxer?.stop()
             mMediaMuxer?.release()
             insertDCIM(mContext, path, true)
             Logger.i(TAG, "stop media muxer")
@@ -247,7 +260,7 @@ class Mp4Muxer(
 
     fun getSavePath() = path
 
-    private fun insertDCIM(context: Context?, videoPath: String?, notifyOut: Boolean = false) {
+    /*private fun insertDCIM(context: Context?, videoPath: String?, notifyOut: Boolean = false) {
         context?.let { ctx ->
             if (videoPath.isNullOrEmpty()) {
                 return
@@ -260,8 +273,55 @@ class Mp4Muxer(
                 }
             }
         }
+    }*/
+    private fun insertDCIM(context: Context?, videoPath: String?, notifyOut: Boolean = false) {
+        Log.d("VideoCheck"," insert DCIM called ");
+        context?.let { ctx ->
+            if (videoPath.isNullOrEmpty()) {
+                return
+            }
+
+            val contentResolver = context.contentResolver
+            var outputStream: OutputStream? = null
+            var inputStream: InputStream? = null
+            val uri = getUriFromFilePath(context,videoPath)
+            try {
+                outputStream = contentResolver.openOutputStream(uri)
+                val videoFile = File(videoPath)
+                inputStream = FileInputStream(videoFile)
+                outputStream?.let { inputStream.copyTo(it) }
+
+                // Notify that the operation is complete
+                mMainHandler.post {
+                    mCaptureCallBack?.onComplete(uri.toString())
+                }
+            } catch (e: IOException) {
+                mMainHandler.post {
+                    mCaptureCallBack?.onError(e.localizedMessage)
+                }
+                Log.d("VideoCheck", "Failed to insert video, err = ${e.localizedMessage}", e)
+            } finally {
+                try {
+                    inputStream?.close()
+                    outputStream?.close()
+                } catch (e: IOException) {
+                    Log.d("VideoCheck", "Failed to close streams, err = ${e.localizedMessage}", e)
+                }
+            }
+           /* ctx.contentResolver.let { content ->
+                val uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                content.insert(uri, getVideoContentValues(videoPath))
+                mMainHandler.post {
+                    mCaptureCallBack?.onComplete(this.path)
+                }
+            }*/
+        }
     }
 
+    fun getUriFromFilePath(context: Context, filePath: String): Uri {
+        val file = File(filePath)
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
     private fun getVideoContentValues(path: String): ContentValues {
         val file = File(path)
         val values = ContentValues()

@@ -20,6 +20,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.SurfaceTexture
 import android.os.*
+import android.util.Log
 import android.view.OrientationEventListener
 import android.view.SurfaceHolder
 import androidx.core.content.ContextCompat
@@ -87,6 +88,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     }
 
     override fun handleMessage(msg: Message): Boolean {
+        Log.d("Keerthi","16xckj cvk df");
         when(msg.what) {
             MSG_INIT -> {
                 loadCameraInfo()

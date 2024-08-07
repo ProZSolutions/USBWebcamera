@@ -135,7 +135,7 @@ class PreviewImageView: AppCompatImageView {
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    override fun onDraw(canvas: Canvas?) {
+    override fun onDraw(canvas: Canvas) {
         try {
             canvas?.saveLayer(mSrcRectF, null)
             // 缩小画布
@@ -174,6 +174,45 @@ class PreviewImageView: AppCompatImageView {
             e.printStackTrace()
         }
     }
+  /*  override fun onDraw(canvas: Canvas?) {
+        try {
+            canvas?.saveLayer(mSrcRectF, null)
+            // 缩小画布
+//            val sx = 1.0f * (width - borderWidth) / width
+//            val sy  = 1.0f * (height - borderWidth) / height
+//            canvas?.scale(sx, sy, width / 2.0f, height / 2.0f)
+
+            // 绘制原图
+            super.onDraw(canvas)
+
+            // 裁剪，得到圆角原图
+            mPaint.reset()
+            mPaint.isAntiAlias = true
+            mPaint.style = Paint.Style.FILL
+            mPaint.color = Color.parseColor("#FFFFFF")
+            mPaint.xfermode = mXfermode
+            mClipPath.reset()
+            mClipPath.addRoundRect(mSrcRectF, mSrcRadii, Path.Direction.CCW)
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O_MR1) {
+                canvas?.drawPath(mClipPath, mPaint)
+            } else {
+                mTmpPath.reset()
+                mTmpPath.addRect(mSrcRectF, Path.Direction.CCW)
+                mTmpPath.op(mClipPath, Path.Op.DIFFERENCE)
+                canvas?.drawPath(mTmpPath, mPaint)
+            }
+            mPaint.xfermode = null
+            canvas?.restore()
+
+            // 绘制边框
+            drawBorders(canvas)
+            // 绘制进度条
+            drawBorderProgress(canvas)
+        } catch (e: Exception) {
+            Logger.e(TAG, "draw preview image view failed", e)
+            e.printStackTrace()
+        }
+    }*/
 
     private fun drawBorders(canvas: Canvas?) {
         if (mTheme == Theme.LIGHT || !canShowImageBorder) return
@@ -272,13 +311,21 @@ class PreviewImageView: AppCompatImageView {
         val progress = PropertyValuesHolder.ofFloat("progress", getProgress(), 1.0f)
         mBreathAnimation = ObjectAnimator.ofPropertyValuesHolder(this,  scaleX,  scaleY, progress).apply {
             addListener(object :AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator?) {
+                override fun onAnimationEnd(animation: Animator) {
                     super.onAnimationEnd(animation)
                     isNewImageLoading = false
                     setProgress(0.0f)
                     mBreathAnimation = null
                     mListener?.onLoadingFinish()
                 }
+
+               /* override fun onAnimationEnd(animation: Animator?) {
+                    super.onAnimationEnd(animation)
+                    isNewImageLoading = false
+                    setProgress(0.0f)
+                    mBreathAnimation = null
+                    mListener?.onLoadingFinish()
+                }*/
             })
             duration = 150
             interpolator = LinearInterpolator()

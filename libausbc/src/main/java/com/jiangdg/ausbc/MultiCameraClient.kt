@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.graphics.SurfaceTexture
 import android.hardware.usb.UsbDevice
 import android.os.*
+import android.util.Log
 import android.view.Surface
 import com.jiangdg.ausbc.callback.*
 import com.jiangdg.ausbc.camera.bean.CameraRequest
@@ -52,6 +53,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
     }
 
     init {
+        Log.d("Keerthi","kjngsljsklnsdkjlnsln");
         mUsbMonitor = USBMonitor(ctx, object : USBMonitor.OnDeviceConnectListener {
             /**
              * Called by receive usb device inserted broadcast
@@ -59,11 +61,13 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              * @param device usb device info,see [UsbDevice]
              */
             override fun onAttach(device: UsbDevice?) {
+                Log.d("Keerthi","kjngsljsklnsdkjlnsln"+device);
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}&${device?.productId}&${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
+                    Log.d("Keerthi","onAttach13241");
                     return
                 }
                 mMainHandler.post {
@@ -82,6 +86,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
+                    Log.d("Keerthi","onDetach24919");
                     return
                 }
                 mMainHandler.post {
@@ -104,6 +109,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
+                    Log.d("Keerthi","onConnect13224");
                     return
                 }
                 mMainHandler.post {
@@ -122,6 +128,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
+                    Log.d("Keerthi","onDisconnect1234 ");
                     return
                 }
                 mMainHandler.post {
@@ -141,6 +148,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
+                    Log.d("Keerthi","onCancel123 ");
                     return
                 }
                 mMainHandler.post {
@@ -154,6 +162,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
      * Register usb insert broadcast
      */
     fun register() {
+        Log.d("Keerthi","dlkdfklgnslkgnsklmnslmtwltlk x, sdlkng");
         if (isMonitorRegistered()) {
             return
         }
@@ -168,6 +177,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
      */
     fun unRegister() {
         if (!isMonitorRegistered()) {
+            Log.d("Keerthi","unRegister");
             return
         }
         if (Utils.debugCamera) {
@@ -184,6 +194,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
      */
     fun requestPermission(device: UsbDevice?): Boolean {
         if (!isMonitorRegistered()) {
+            Log.d("Keerthi","isMonitorRegistered");
             Logger.w(TAG, "Usb monitor haven't been registered.")
             return false
         }
@@ -288,6 +299,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
         }
         protected val mCameraDir by lazy {
+            Log.d("FilePathrror"," multicam client fun call ")
             "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/ProzUSBCamera"
         }
 
@@ -634,8 +646,10 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         protected fun postStateEvent(state: ICameraStateCallBack.State, msg: String? = null) {
             mMainHandler.post {
                 mCameraStateCallback?.onCameraState(this, state, msg)
-            }
+             }
         }
+
+
 
         /**
          * Set usb control block, when the uvc device was granted permission
@@ -698,7 +712,9 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             mCameraThread?.quitSafely()
             mCameraThread = null
             mCameraHandler = null
-        }
+
+         }
+
 
         /**
          * check if camera opened
@@ -921,7 +937,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             }
             try {
                 mMediaMuxer?.release()
-            } catch (e: Exception) {
+             } catch (e: Exception) {
                 e.printStackTrace()
                 Logger.e(TAG, "release muxer failed, err is ${e.localizedMessage}")
             } finally {
@@ -988,8 +1004,10 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
 
         private fun getDefaultCameraRequest(): CameraRequest {
             return CameraRequest.Builder()
-                .setPreviewWidth(1280)
-                .setPreviewHeight(720)
+              /*   .setPreviewWidth(1600)
+                .setPreviewHeight(1200)*/
+                 .setPreviewWidth(640)
+                .setPreviewHeight(480)
                 .create()
         }
     }

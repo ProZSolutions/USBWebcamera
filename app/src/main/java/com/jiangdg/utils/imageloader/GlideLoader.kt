@@ -38,8 +38,8 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
-import com.jiangdg.demo.R
-import java.lang.IllegalArgumentException
+import com.jiangdg.ausbc.R
+ import java.lang.IllegalArgumentException
 
 /**GlideImageLoader by glide
  *
@@ -92,7 +92,9 @@ class GlideLoader<T>(target: T) : ILoader<ImageView> {
         bitmapTransformation: BitmapTransformation?
     ) {
         mRequestManager!!.load(url).optionalTransform(bitmapTransformation!!)
+
             .optionalTransform(
+
                 WebpDrawable::class.java,
                 WebpDrawableTransformation(bitmapTransformation)
             )
@@ -186,8 +188,30 @@ class GlideLoader<T>(target: T) : ILoader<ImageView> {
             this.asBitmap()
                 .centerCrop()
                 .load(url)
+
                 .listener(object : RequestListener<Bitmap> {
                     override fun onLoadFailed(
+                        e: GlideException?,
+                        model: Any?,
+                        target: Target<Bitmap>,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                         listener.onLoadedFailed(e)
+                        return true
+                    }
+
+                    override fun onResourceReady(
+                        resource: Bitmap,
+                        model: Any,
+                        target: Target<Bitmap>?,
+                        dataSource: DataSource,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        listener.onLoadedSuccess(resource)
+                        return true
+                    }
+
+                  /*  override fun onLoadFailed(
                         e: GlideException?,
                         model: Any?,
                         target: Target<Bitmap>?,
@@ -206,7 +230,7 @@ class GlideLoader<T>(target: T) : ILoader<ImageView> {
                     ): Boolean {
                         listener.onLoadedSuccess(resource)
                         return true
-                    }
+                    }*/
 
                 })
                 .submit(width, height)

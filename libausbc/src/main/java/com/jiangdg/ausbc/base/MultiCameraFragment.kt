@@ -17,6 +17,7 @@ package com.jiangdg.ausbc.base
 
 import android.content.Context
 import android.hardware.usb.UsbDevice
+import android.util.Log
 import com.jiangdg.ausbc.MultiCameraClient
 import com.jiangdg.ausbc.callback.IDeviceConnectCallBack
 import com.jiangdg.usb.USBMonitor
@@ -31,6 +32,7 @@ abstract class MultiCameraFragment: BaseFragment() {
     private val mCameraMap = hashMapOf<Int, MultiCameraClient.ICamera>()
 
     override fun initData() {
+        Log.d("Keerthi","jljdfhlsadfskdbgisbg");
         mCameraClient = MultiCameraClient(requireContext(), object : IDeviceConnectCallBack {
             override fun onAttachDev(device: UsbDevice?) {
                 device ?: return
@@ -87,6 +89,7 @@ abstract class MultiCameraFragment: BaseFragment() {
     }
 
     override fun clear() {
+        Log.d("Keerthi","dklgnsdlgnsdngs;ldgnsdgs");
         mCameraMap.values.forEach {
             it.closeCamera()
         }

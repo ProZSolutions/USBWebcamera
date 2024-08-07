@@ -71,6 +71,7 @@
 
     <ImageView
         android:id="@+id/resolutionBtn"
+        android:src="@mipmap/camera_resolution"
         style="@style/Camera2TopButtonStyle"
          app:layout_constraintBottom_toBottomOf="@+id/toolbarBg"
         app:layout_constraintEnd_toEndOf="@id/toolbarBg"

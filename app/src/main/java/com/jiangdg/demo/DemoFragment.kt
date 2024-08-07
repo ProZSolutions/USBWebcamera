@@ -49,16 +49,19 @@ import androidx.core.content.FileProvider
 import androidx.core.view.children
 import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.multidex.BuildConfig
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.list.listItemsSingleChoice
 import com.jiangdg.ausbc.MultiCameraClient
+import com.jiangdg.ausbc.R
 import com.jiangdg.ausbc.base.BaseBottomDialog
 import com.jiangdg.ausbc.base.CameraFragment
 import com.jiangdg.ausbc.callback.ICameraStateCallBack
-import com.jiangdg.demo.databinding.FragmentDemoBinding
-import com.jiangdg.ausbc.callback.ICaptureCallBack
+ import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.callback.IPlayCallBack
 import com.jiangdg.ausbc.camera.CameraUVC
+import com.jiangdg.ausbc.databinding.DialogMoreBinding
+import com.jiangdg.ausbc.databinding.FragmentDemoBinding
 import com.jiangdg.ausbc.render.effect.EffectBlackWhite
 import com.jiangdg.ausbc.render.effect.EffectSoul
 import com.jiangdg.ausbc.render.effect.EffectZoom
@@ -71,7 +74,7 @@ import com.jiangdg.utils.imageloader.ImageLoaders
 import com.jiangdg.ausbc.widget.*
 import com.jiangdg.demo.EffectListDialog.Companion.KEY_ANIMATION
 import com.jiangdg.demo.EffectListDialog.Companion.KEY_FILTER
-import com.jiangdg.demo.databinding.DialogMoreBinding
+
 import com.jiangdg.utils.MMKVUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -348,6 +351,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     }
 
     override fun getCameraViewContainer(): ViewGroup {
+        Log.d("OTGConnection"," mBindling "+mViewBinding.cameraViewContainer)
         return mViewBinding.cameraViewContainer
     }
 
@@ -494,7 +498,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 //            return
 //        }
         clickAnimation(v!!, object : AnimatorListenerAdapter() {
-            override fun onAnimationEnd(animation: Animator?) {
+            override fun onAnimationEnd(animation: Animator) {
                 when (v) {
                     mViewBinding.lensFacingBtn1 -> {
                         getCurrentCamera()?.let { strategy ->
@@ -531,7 +535,48 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                     else -> {
                     }
                 }
-            }
+             }
+
+
+
+          /*  override fun onAnimationEnd(animation: Animator?) {
+                when (v) {
+                    mViewBinding.lensFacingBtn1 -> {
+                        getCurrentCamera()?.let { strategy ->
+                            if (strategy is CameraUVC) {
+                                showUsbDevicesDialog(getDeviceList(), strategy.getUsbDevice())
+                                return
+                            }
+                        }
+                    }
+                    mViewBinding.effectsBtn -> {
+                        showEffectDialog()
+                    }
+                    mViewBinding.cameraTypeBtn -> {
+                    }
+                    mViewBinding.settingsBtn -> {
+                        showMoreMenu()
+                    }
+                    mViewBinding.voiceBtn -> {
+                        playMic()
+                    }
+                    mViewBinding.resolutionBtn -> {
+                        showResolutionDialog()
+                    }
+                    mViewBinding.albumPreviewIv -> {
+                        goToGalley()
+                    }
+                    // more settings
+                    mMoreBindingView.multiplex, mMoreBindingView.multiplexText -> {
+                        goToMultiplexActivity()
+                    }
+                    mMoreBindingView.contact, mMoreBindingView.contactText -> {
+                        showContactDialog()
+                    }
+                    else -> {
+                    }
+                }
+            }*/
         })
     }
 
@@ -696,6 +741,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
             }
         } catch (e: Exception) {
+            Log.d("FilePath"," file error "+e.localizedMessage)
             ToastUtils.show("open error: ${e.localizedMessage}")
         }
     }
@@ -719,17 +765,23 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             }
         }
     }
-
+    fun getUriFromFilePath(context: Context, filePath: String): Uri {
+        val file = File(filePath)
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
     private fun viewImage() {
         Log.d("FilePath"," view image "+URIpath)
         val packageManager = requireContext().packageManager
 
         val imageFile = File(URIpath)
-        val imageUri: Uri = FileProvider.getUriForFile(
+     /*   val imageUri: Uri = FileProvider.getUriForFile(
              requireContext(),
             "${BuildConfig.APPLICATION_ID}.fileprovider",
             imageFile
-        )
+        )*/
+        val file = File(URIpath)
+        val imageUri =FileProvider.getUriForFile(requireContext(), "${context?.packageName}.fileprovider", file);
+
 
          URIpath?.toString()?.let { uriString ->
             if (uriString.contains("mp4")) {
@@ -751,18 +803,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
              }
         }
 
-
-
-
-        // Check if there is an activity that can handle the intent
-
-        //val imageUri = Uri.parse(URIpath)
-      //  val imageFile = Uri.parse("file://$imageUri")
-      //  val intent = Intent(Intent.ACTION_VIEW).apply {
-        //    setDataAndType(imageFile, "*/*")
-        //    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-       // }
-       // startActivity(intent)
     }
 
     private fun playMic() {
@@ -869,10 +909,16 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             )
             translationX.duration = 600
             translationX.addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationStart(animation: Animator?) {
+                override fun onAnimationEnd(animation: Animator) {
+                    super.onAnimationEnd(animation)
+                    mViewBinding.controlPanelLayout.visibility = View.VISIBLE
+
+                }
+
+              /*  override fun onAnimationStart(animation: Animator?) {
                     super.onAnimationStart(animation)
                     mViewBinding.controlPanelLayout.visibility = View.VISIBLE
-                }
+                }*/
             })
             translationX.start()
         } else {
@@ -884,10 +930,16 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             )
             translationX.duration = 600
             translationX.addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator?) {
+                override fun onAnimationEnd(animation: Animator) {
                     super.onAnimationEnd(animation)
                     mViewBinding.controlPanelLayout.visibility = View.INVISIBLE
+
                 }
+
+                /*override fun onAnimationEnd(animation: Animator?) {
+                    super.onAnimationEnd(animation)
+                    mViewBinding.controlPanelLayout.visibility = View.INVISIBLE
+                }*/
             })
             translationX.start()
         }

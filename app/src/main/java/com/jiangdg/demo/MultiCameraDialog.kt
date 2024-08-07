@@ -4,8 +4,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.jiangdg.ausbc.R
 import com.jiangdg.ausbc.base.BaseBottomDialog
-import com.jiangdg.demo.databinding.DialogMultiCamerasBinding
+import com.jiangdg.ausbc.databinding.DialogMultiCamerasBinding
 
 /** Multi Camera Dialog
  *

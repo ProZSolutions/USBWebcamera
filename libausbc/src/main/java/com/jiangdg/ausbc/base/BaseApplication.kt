@@ -16,6 +16,7 @@
 package com.jiangdg.ausbc.base
 
 import android.app.Application
+import android.util.Log
 import com.jiangdg.ausbc.utils.CrashUtils
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.ToastUtils
@@ -28,6 +29,8 @@ open class BaseApplication: Application() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.d("Keerthi","16");
+
         CrashUtils.init(this)
         Logger.init(this)
         ToastUtils.init(this)

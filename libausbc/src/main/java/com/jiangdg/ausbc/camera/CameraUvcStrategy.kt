@@ -18,9 +18,11 @@ package com.jiangdg.ausbc.camera
 import android.content.ContentValues
 import android.content.Context
 import android.hardware.usb.UsbDevice
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
+import androidx.core.content.FileProvider
 import com.jiangdg.ausbc.R
 import com.jiangdg.ausbc.callback.IDeviceConnectCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
@@ -35,6 +37,7 @@ import com.jiangdg.usb.USBMonitor
 import com.jiangdg.uvc.IFrameCallback
 import com.jiangdg.uvc.UVCCamera
 import java.io.File
+import java.io.IOException
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -69,6 +72,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     override fun loadCameraInfo() {
+        Log.d("Keerthi","1346");
         try {
             val devList = getUsbDeviceListInternal()
             if (devList.isNullOrEmpty()) {
@@ -93,6 +97,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     private fun loadCameraInfoInternal(dev: UsbDevice) {
+        Log.d("Keerthi","678916");
         if (mCameraInfoMap.containsKey(dev.deviceId)) {
             return
         }
@@ -112,6 +117,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     override fun startPreviewInternal() {
+        Log.d("Keerthi","153i936");
         try {
             createCamera()
             realStartPreview()
@@ -123,6 +129,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     private fun createCamera(): Boolean? {
+        Log.d("Keerthi","1k,dks df6");
         val ctrlBlock = mCtrlBlockSettableFuture?.get()
         val device = mDevSettableFuture?.get()
         device ?: return null
@@ -177,12 +184,14 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     private fun isPreviewSizeSupported(previewWidth: Int, previewHeight: Int): Boolean {
+        Log.d("Keerthi","16kwkn");
         return getAllPreviewSizes()?.find {
             it.width == previewWidth && it.height == previewHeight
         } != null
     }
 
     private fun realStartPreview(): Boolean? {
+        Log.d("Keerthi","lnglkjnsgli16");
         try {
             val st = getSurfaceTexture()
             val holder = getSurfaceHolder()
@@ -224,6 +233,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     override fun stopPreviewInternal() {
+        Log.d("Keerthi","1j k lk vd6");
         if (Utils.debugCamera && mIsPreviewing.get()) {
             Logger.i(TAG, "stopPreviewInternal")
         }
@@ -235,7 +245,9 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         postCameraStatus(CameraStatus(CameraStatus.STOP))
     }
 
-    override fun captureImageInternal(savePath: String?) {
+     override fun captureImageInternal(savePath: String?) {
+        Log.d("Keerthi","16fkbsdksdkfs");
+         Log.d("FilePathrror"," insert valle ");
         if (!hasCameraPermission() || !hasStoragePermission()) {
             mMainHandler.post {
                 mCaptureDataCb?.onError("Have no storage or camera permission.")
@@ -263,6 +275,97 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             val title = savePath ?: "IMG_JJCamera_$date"
             val displayName = savePath ?: "$title.jpg"
             val path = savePath ?: "$mCameraDir/$displayName"
+            Log.d("getFilePath"," path "+path+" dir "+mCameraDir);
+
+           // ToastUtils.show(path!!);
+            try {
+                Log.d("FilePathrror"," come to tey3 ");
+                 ToastUtils.show(path)
+            } catch (e: IOException) {
+                e.printStackTrace()
+                mMainHandler.post {
+                    Log.d("FilePathrror"," err3 "+e.message);
+                    mCaptureDataCb?.onError("Failed to write file: ${e.message}")
+                }
+            }
+            Log.d("FilePath"," file path in mp4 muxer "+path);
+
+
+            val orientation = 0
+            val location = Utils.getGpsLocation(getContext())
+            val width = getRequest()!!.previewWidth
+            val height = getRequest()!!.previewHeight
+            val ret = MediaUtils.saveYuv2Jpeg(path, data, width, height)
+            if (!ret) {
+                val file = File(path)
+                if (file.exists()) {
+                    file.delete()
+                }
+                mMainHandler.post {
+                    mCaptureDataCb?.onError("save yuv to jpeg failed.")
+                }
+                Logger.w(TAG, "save yuv to jpeg failed.")
+                return@submit
+            }
+            val values = ContentValues()
+            values.put(MediaStore.Images.ImageColumns.TITLE, title)
+            values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
+            values.put(MediaStore.Images.ImageColumns.DATA, path)
+            values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
+            values.put(MediaStore.Images.ImageColumns.ORIENTATION, orientation)
+            values.put(MediaStore.Images.ImageColumns.LONGITUDE, location?.longitude)
+            values.put(MediaStore.Images.ImageColumns.LATITUDE, location?.latitude)
+            /*getContext()?.contentResolver?.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                values
+            )*/
+            val uri = getContext()?.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            if (uri == null) {
+                mMainHandler.post {
+                    Log.d("FilePathrror"," insert mediastore3 ");
+                    mCaptureDataCb?.onError("Failed to insert image into MediaStore.")
+                }
+            }
+            mMainHandler.post {
+                mCaptureDataCb?.onComplete(path)
+            }
+            mIsCapturing.set(false)
+            if (Utils.debugCamera) {
+                Logger.i(TAG, "captureImageInternal save path = $path")
+            }
+        }
+    }
+/*
+    override fun captureImageInternal(savePath: String?) {
+        Log.d("Keerthi","16fkbsdksdkfs");
+        if (!hasCameraPermission() || !hasStoragePermission()) {
+            mMainHandler.post {
+                mCaptureDataCb?.onError("Have no storage or camera permission.")
+            }
+            Logger.i(TAG, "captureImageInternal failed, has no storage/camera permission.")
+            return
+        }
+        if (mIsCapturing.get()) {
+            return
+        }
+        mSaveImageExecutor.submit {
+            val data = mNV21DataQueue.pollFirst(CAPTURE_TIMES_OUT_SEC, TimeUnit.SECONDS)
+            if (data == null || getRequest() == null) {
+                mMainHandler.post {
+                    mCaptureDataCb?.onError("Times out or camera request is null")
+                }
+                Logger.i(TAG, "captureImageInternal failed, times out.")
+                return@submit
+            }
+            mIsCapturing.set(true)
+            mMainHandler.post {
+                mCaptureDataCb?.onBegin()
+            }
+            val date = mDateFormat.format(System.currentTimeMillis())
+            val title = savePath ?: "IMG_JJCamera_$date"
+            val displayName = savePath ?: "$title.jpg"
+            val path = savePath ?: "$mCameraDir/$displayName"
+            Log.d("getFilePath"," path "+path+" dir "+mCameraDir);
 
             ToastUtils.show(path!!);
             Log.d("FilePath"," file path in mp4 muxer "+path);
@@ -305,8 +408,18 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             }
         }
     }
+*/
+     fun getUriFromFilePath(context: Context, filePath: String): Uri? {
+        val file = File(filePath)
+        return if (file.exists()) {
+            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        } else {
+            null
+        }
+    }
 
     override fun switchCameraInternal(cameraId: String?) {
+        Log.d("Keerthi","16nhvgsj vsdkn gos ");
         getRequest()?.let {
             if (Utils.debugCamera) {
                 Logger.i(TAG, "switchCameraInternal, camera id = $cameraId")
@@ -336,6 +449,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     override fun updateResolutionInternal(width: Int, height: Int) {
+        Log.d("Keerthi","dskjsdsd l");
         getRequest()?.let { request ->
             request.previewWidth = width
             request.previewHeight = height
@@ -345,6 +459,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize>? {
+        Log.d("Keerthi","sdksdgks dgkls dg");
         getRequest()?.let { request ->
             val cameraInfo = mCameraInfoMap.values.find {
                 request.cameraId == it.cameraId
@@ -388,6 +503,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     override fun register() {
+        Log.d("Keerthi","k,dsv ks fvlks ");
         if (mUsbMonitor?.isRegistered == true) {
             return
         }
@@ -545,6 +661,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
      * @return device list
      */
     fun getUsbDeviceList(resId: Int? = null): MutableList<UsbDevice>? {
+        Log.d("Keerthi","16sdkjs dk sdffk asdkf s");
         return mUsbMonitor?.deviceList?.let { usbDevList ->
             val list = arrayListOf<UsbDevice>()
             if (resId == null) {
@@ -575,6 +692,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
      * @return current opened [UsbDevice]
      */
     fun getCurrentDevice(): UsbDevice? {
+        Log.d("Keerthi","1dskksd g6");
         return try {
             val isConnected = mConnectSettableFuture.get(3, TimeUnit.SECONDS)
             if (isConnected != true) {

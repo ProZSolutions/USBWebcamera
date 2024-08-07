@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Point
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -37,17 +38,20 @@ abstract class BaseBottomDialog: BottomSheetDialogFragment()  {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d("Keerthi","18");
         return getRootView(inflater, container)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d("Keerthi","19");
         initView()
         initData()
     }
 
     override fun onStart() {
         super.onStart()
+        Log.d("Keerthi","17");
         dialog?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
         val sheetDialog = dialog as BottomSheetDialog
         sheetDialog.delegate.findViewById<FrameLayout>(R.id.design_bottom_sheet)?.apply {
@@ -71,6 +75,7 @@ abstract class BaseBottomDialog: BottomSheetDialogFragment()  {
     }
 
     fun hide() {
+
         mBehavior?.state = BottomSheetBehavior.STATE_HIDDEN
     }
 

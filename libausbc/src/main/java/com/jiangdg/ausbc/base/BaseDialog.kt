@@ -19,6 +19,7 @@ import android.app.Activity
 import android.app.Dialog
 import android.content.res.Configuration
 import android.util.DisplayMetrics
+import android.util.Log
 import com.jiangdg.ausbc.R
 
 abstract class BaseDialog(
@@ -30,6 +31,7 @@ abstract class BaseDialog(
     protected val mDialog: Dialog = Dialog(mContext, R.style.CommonDialogStyle)
 
     init {
+        Log.d("Keerthi","20");
         mDialog.setContentView(this.getContentLayoutId())
         val orientation = mContext.resources.configuration.orientation
         val isLandscape = orientation == Configuration.ORIENTATION_LANDSCAPE // 是否横屏
@@ -51,22 +53,27 @@ abstract class BaseDialog(
     final override fun getDialog(): Dialog = mDialog
 
     override fun show() {
+        Log.d("Keerthi","22");
         getDialog().show()
     }
 
     override fun dismiss() {
+        Log.d("Keerthi","23");
         getDialog().dismiss()
     }
 
     override fun isShowing(): Boolean {
+        Log.d("Keerthi","24");
         return getDialog().isShowing
     }
 
     override fun setCanceledOnTouchOutside(cancel: Boolean) {
+        Log.d("Keerthi","25");
         getDialog().setCanceledOnTouchOutside(cancel)
     }
 
     override fun setCancelable(flag: Boolean) {
+        Log.d("Keerthi","26");
         getDialog().setCancelable(flag)
     }
 }

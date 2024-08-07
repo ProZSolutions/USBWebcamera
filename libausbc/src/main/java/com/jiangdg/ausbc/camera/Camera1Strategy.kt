@@ -20,9 +20,11 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.ImageFormat
 import android.hardware.Camera
+import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Surface
+import androidx.core.content.FileProvider
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
 import com.jiangdg.ausbc.camera.bean.CameraStatus
 import com.jiangdg.ausbc.camera.bean.CameraV1Info
@@ -31,6 +33,7 @@ import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.ToastUtils
 import com.jiangdg.ausbc.utils.Utils
 import java.io.File
+import java.io.IOException
 import kotlin.Exception
 
 /** Camera1 usage
@@ -47,6 +50,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     private  val  ctx = ctx;
 
     override fun loadCameraInfo() {
+        Log.d("Keerthi","slgbskgbs vkjsbvk ");
         val cameraInfo = Camera.CameraInfo()
         for (cameraId in 0 until Camera.getNumberOfCameras()) {
             Camera.getCameraInfo(cameraId, cameraInfo)
@@ -75,16 +79,29 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     override fun startPreviewInternal() {
+        Log.d("Keerthi","ekdbskdbib  difuba");
         createCamera()
         setParameters()
         realStartPreview()
     }
 
     override fun stopPreviewInternal() {
+        Log.d("Keerthi","eirskvisd sdfsd");
         destroyCamera()
     }
 
+     fun getUriFromFilePath(context: Context, filePath: String): Uri? {
+        val file = File(filePath)
+        return if (file.exists()) {
+            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        } else {
+            null
+        }
+    }
+
     override fun captureImageInternal(savePath: String?) {
+        Log.d("FilePathrror"," insert called ");
+        Log.d("Keerthi","isdnndbhs ");
         val jpegDataCb = Camera.PictureCallback { data, camera ->
             mSaveImageExecutor.submit {
                 mMainHandler.post {
@@ -99,12 +116,24 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
                 val orientation = 0
                 val location = Utils.getGpsLocation(getContext())
                 // 写入文件
-                File(path).writeBytes(data)
+                Log.d("getFilePath"," path "+path+" dir "+mCameraDir);
 
+               /* File(path).writeBytes(data)
 
                 ToastUtils.show(path!!);
                 Log.d("FilePath"," file path in mp4 muxer "+path);
-
+*/
+                try {
+                    Log.d("FilePathrror"," come to tey");
+                    File(path).writeBytes(data)
+                    ToastUtils.show(path)
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    mMainHandler.post {
+                        Log.d("FilePathrror"," err "+e.message);
+                        mCaptureDataCb?.onError("Failed to write file: ${e.message}")
+                    }
+                 }
                 // 更新
                 val values = ContentValues()
                 values.put(MediaStore.Images.ImageColumns.TITLE, title)
@@ -116,7 +145,15 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
                 values.put(MediaStore.Images.ImageColumns.ORIENTATION, orientation)
                 values.put(MediaStore.Images.ImageColumns.LONGITUDE, location?.longitude)
                 values.put(MediaStore.Images.ImageColumns.LATITUDE, location?.latitude)
-                getContext()?.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+              //  getContext()?.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                val uri = getContext()?.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                if (uri == null) {
+                    mMainHandler.post {
+                        Log.d("FilePathrror"," insert mediastore ");
+                        mCaptureDataCb?.onError("Failed to insert image into MediaStore.")
+                    }
+                 }
+
                 mMainHandler.post {
                     mCaptureDataCb?.onComplete(path)
                 }
@@ -143,7 +180,70 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
         mCamera?.takePicture(null, null, null, jpegDataCb)
     }
 
+//    override fun captureImageInternal(savePath: String?) {
+//        Log.d("Keerthi","isdnndbhs ");
+//        val jpegDataCb = Camera.PictureCallback { data, camera ->
+//            mSaveImageExecutor.submit {
+//                mMainHandler.post {
+//                    mCaptureDataCb?.onBegin()
+//                }
+//                val date = mDateFormat.format(System.currentTimeMillis())
+//                val title = savePath ?: "IMG_JJCamera_$date"
+//                val displayName = savePath ?: "$title.jpg"
+//                val path = savePath ?: "$mCameraDir/$displayName"
+//                val width = getRequest()?.previewWidth
+//                val height = getRequest()?.previewHeight
+//                val orientation = 0
+//                val location = Utils.getGpsLocation(getContext())
+//                // 写入文件
+//                Log.d("getFilePath"," path "+path+" dir "+mCameraDir);
+//
+//                File(path).writeBytes(data)
+//
+//                ToastUtils.show(path!!);
+//                Log.d("FilePath"," file path in mp4 muxer "+path);
+//
+//                // 更新
+//                val values = ContentValues()
+//                values.put(MediaStore.Images.ImageColumns.TITLE, title)
+//                values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
+//                values.put(MediaStore.Images.ImageColumns.DATA, path)
+//                values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
+//                values.put(MediaStore.Images.ImageColumns.WIDTH, width)
+//                values.put(MediaStore.Images.ImageColumns.HEIGHT, height)
+//                values.put(MediaStore.Images.ImageColumns.ORIENTATION, orientation)
+//                values.put(MediaStore.Images.ImageColumns.LONGITUDE, location?.longitude)
+//                values.put(MediaStore.Images.ImageColumns.LATITUDE, location?.latitude)
+//                getContext()?.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+//                mMainHandler.post {
+//                    mCaptureDataCb?.onComplete(path)
+//                }
+//                stopPreviewInternal()
+//                startPreviewInternal()
+//                realStartPreview()
+//                mIsCapturing.set(false)
+//                if (Utils.debugCamera) {
+//                    Logger.i(TAG, "takePictureInternal save path = $path")
+//                }
+//            }
+//        }
+//        if (! hasCameraPermission() || !hasStoragePermission()) {
+//            mMainHandler.post {
+//                mCaptureDataCb?.onError("Have no storage or camera permission.")
+//            }
+//            Logger.i(TAG, "takePictureInternal failed, has no storage/camera permission.")
+//            return
+//        }
+//        if (mIsCapturing.get()) {
+//            return
+//        }
+//        mIsCapturing.set(true)
+//        mCamera?.takePicture(null, null, null, jpegDataCb)
+//    }
+
+
     override fun switchCameraInternal(cameraId: String?) {
+        Log.d("Keerthi","soidhhfladnf");
         getRequest()?.let { request ->
             request.isFrontCamera = !request.isFrontCamera
             stopPreviewInternal()
@@ -156,6 +256,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     override fun updateResolutionInternal(width: Int, height: Int) {
+        Log.d("Keerthi","disdgnsnosnv ");
         getRequest()?.let { request ->
             request.previewWidth = width
             request.previewHeight = height
@@ -165,6 +266,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize>? {
+        Log.d("Keerthi","dfisadgsdgsdui899ee");
         getRequest()?.let { request ->
             val list = mutableListOf<PreviewSize>()
             val cameraInfo = mCameraInfoMap.values.find {
@@ -192,6 +294,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     private fun createCamera() {
+        Log.d("Keerthi","isudbksd89o4ww398");
         getRequest()?.let { request->
             if (! hasCameraPermission()) {
                 Logger.i(TAG, "openCamera failed, has no camera permission.")
@@ -219,6 +322,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     private fun setParameters() {
+        Log.d("Keerthi","k dfibknsdvlnonas");
         try {
             getRequest()?.let { request ->
                 mCamera?.parameters?.apply {
@@ -256,6 +360,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     private fun realStartPreview() {
+        Log.d("Keerthi","fisbdknsdg98hw9 9");
         val st = getSurfaceTexture()
         val holder = getSurfaceHolder()
         if (st == null && holder == null) {
@@ -288,6 +393,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     private fun destroyCamera() {
+        Log.d("Keerthi","98rtisndgishdg9we");
         if (! mIsPreviewing.get()) return
         mIsPreviewing.set(false)
         mCamera?.setPreviewCallbackWithBuffer(null)
@@ -306,6 +412,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
         maxWidth: Int,
         maxHeight: Int
     ): PreviewSize {
+        Log.d("Keerthi","sdis, sl ");
         val aspectRatio = maxWidth.toFloat() / maxHeight
         sizeList.forEach { size ->
             val w = size.width
@@ -323,6 +430,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     private fun getPreviewDegree(context: Context?, isFrontCamera: Boolean): Int {
+        Log.d("Keerthi","kv skv s");
         if (context !is Activity) {
             return 90
         }
@@ -344,6 +452,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     override fun onPreviewFrame(data: ByteArray?, camera: Camera?) {
+        Log.d("Keerthi","sdkkndsg");
         data ?: return
         getRequest() ?: return
         try {

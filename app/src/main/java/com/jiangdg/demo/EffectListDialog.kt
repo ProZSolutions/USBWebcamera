@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.BaseViewHolder
+import com.jiangdg.ausbc.R
 import com.jiangdg.ausbc.base.BaseDialog
 import com.jiangdg.ausbc.render.effect.bean.CameraEffect
 import com.jiangdg.utils.MMKVUtils

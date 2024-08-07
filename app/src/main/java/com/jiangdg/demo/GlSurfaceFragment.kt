@@ -25,11 +25,11 @@ import com.jiangdg.ausbc.base.BaseFragment
 import com.jiangdg.ausbc.camera.ICameraStrategy
 import com.jiangdg.ausbc.camera.Camera1Strategy
 import com.jiangdg.ausbc.camera.bean.CameraRequest
+import com.jiangdg.ausbc.databinding.FragmentGlsurfaceBinding
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.ToastUtils
 import com.jiangdg.ausbc.widget.AspectRatioGLSurfaceView
-import com.jiangdg.demo.databinding.FragmentGlsurfaceBinding
-import kotlinx.coroutines.Dispatchers
+ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -134,7 +134,7 @@ class GlSurfaceFragment: BaseFragment() {
 
     companion object {
         private const val TAG = "GlSurfaceFragment"
-        private const val CAMERA_PREVIEW_WIDTH = 1280
-        private const val CAMERA_PREVIEW_HEIGHT = 720
+        private const val CAMERA_PREVIEW_WIDTH = 640
+        private const val CAMERA_PREVIEW_HEIGHT = 480
     }
 }

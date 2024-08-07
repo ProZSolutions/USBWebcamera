@@ -19,6 +19,7 @@ import android.content.Context
 import android.graphics.SurfaceTexture
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.Surface
 import androidx.annotation.MainThread
 import androidx.lifecycle.Lifecycle
@@ -81,6 +82,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     }
 
     init {
+        Log.d("Keerthi","sdfubasdifbsdofnsdlfsd");
         mRequest = mRequest ?: CameraRequest.Builder().create()
         mCtx?.let { context ->
             if (context !is LifecycleOwner) {
@@ -130,6 +132,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      * @param cameraView camera render view, null means offscreen render
      */
     fun openCamera(cameraView: IAspectRatio?, isReboot: Boolean = false) {
+        Log.d("Keerthi","adfkjalaslfan");
         if (mCtx != null && Utils.isTargetSdkOverP(mCtx) && !CameraUtils.hasCameraPermission(mCtx)) {
             Logger.e(TAG,"open camera failed, need Manifest.permission.CAMERA permission")
             return
@@ -214,12 +217,13 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      * Close camera
      */
     fun closeCamera() {
+        Log.d("Keerthi","akdsksdnskdnksdnf");
         if (Utils.debugCamera) {
             Logger.i(TAG, "closeCamera...")
         }
         releaseEncodeProcessor()
         if (isEnableGLEs) {
-            mRenderManager?.stopRenderScreen()
+             mRenderManager?.stopRenderScreen()
         }
         mCamera?.stopPreview()
     }

@@ -26,6 +26,7 @@ package com.jiangdg.uvc;
 import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
@@ -225,8 +226,13 @@ public class UVCCamera {
 		}
     	List<Size> supportedSizes = getSupportedSizeList();
 		if (!supportedSizes.isEmpty()) {
+			Log.d("PreviewOption"," uvc camera arr size "+supportedSizes.size());
+
+
 			mCurrentWidth = supportedSizes.get(0).width;
 			mCurrentHeight = supportedSizes.get(0).height;
+
+			Log.d("PreviewOption"," uvc camera width "+mCurrentWidth+" heig "+mCurrentHeight);
 		}
 		nativeSetPreviewSize(mNativePtr, mCurrentWidth, mCurrentHeight,
 			DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, DEFAULT_PREVIEW_MODE, DEFAULT_BANDWIDTH);
@@ -388,7 +394,8 @@ public class UVCCamera {
 		return result;
 	}
 
-	private static final void addSize(final JSONObject format, final int formatType, final int frameType, final List<Size> size_list) throws JSONException {
+	private static final void addSize(final JSONObject format, final int formatType,
+									  final int frameType, final List<Size> size_list) throws JSONException {
 		final JSONArray size = format.getJSONArray("size");
 		final int size_nums = size.length();
 		for (int j = 0; j < size_nums; j++) {

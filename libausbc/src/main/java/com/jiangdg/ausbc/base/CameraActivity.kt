@@ -18,6 +18,7 @@ package com.jiangdg.ausbc.base
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.hardware.usb.UsbDevice
+import android.util.Log
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -54,6 +55,7 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
     }
 
     override fun initView() {
+        Log.d("Keerthi","33");
         when (val cameraView = getCameraView()) {
             is TextureView -> {
                 handleTextureView(cameraView)
@@ -86,6 +88,7 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
     }
 
     protected fun registerMultiCamera() {
+        Log.d("Keerthi","34");
         mCameraClient = MultiCameraClient(this, object : IDeviceConnectCallBack {
             override fun onAttachDev(device: UsbDevice?) {
                 device ?: return
@@ -161,6 +164,7 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
     }
 
     protected fun unRegisterMultiCamera() {
+        Log.d("Keerthi","sdkgs");
         mCameraMap.values.forEach {
             it.closeCamera()
         }
@@ -173,36 +177,64 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
     protected fun getDeviceList() = mCameraClient?.getDeviceList()
 
     private fun handleTextureView(textureView: TextureView) {
+        Log.d("Keerthi","sofjeaof");
+
         textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(
-                surface: SurfaceTexture?,
+                surface: SurfaceTexture,
                 width: Int,
                 height: Int
             ) {
-                registerMultiCamera()
+                 registerMultiCamera()
             }
 
             override fun onSurfaceTextureSizeChanged(
-                surface: SurfaceTexture?,
+                surface: SurfaceTexture,
                 width: Int,
                 height: Int
             ) {
-                surfaceSizeChanged(width, height)
+                 surfaceSizeChanged(width, height)
+
             }
 
-            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
-                unRegisterMultiCamera()
+            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+                 unRegisterMultiCamera()
                 return false
             }
 
-            override fun onSurfaceTextureUpdated(surface: SurfaceTexture?) {
-            }
+            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
+             }
+
+            /*   override fun onSurfaceTextureAvailable(
+               surface: SurfaceTexture?,
+               width: Int,
+               height: Int
+           ) {
+               registerMultiCamera()
+           }
+
+       override fun onSurfaceTextureSizeChanged(
+               surface: SurfaceTexture?,
+               width: Int,
+               height: Int
+           ) {
+               surfaceSizeChanged(width, height)
+           }
+
+           override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
+               unRegisterMultiCamera()
+               return false
+           }
+
+           override fun onSurfaceTextureUpdated(surface: SurfaceTexture?) {
+           }*/
         }
     }
 
     private fun handleSurfaceView(surfaceView: SurfaceView) {
+        Log.d("Keerthi","adgladgaga");
         surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder?) {
+            /*override fun surfaceCreated(holder: SurfaceHolder?) {
                 registerMultiCamera()
             }
 
@@ -217,6 +249,26 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
 
             override fun surfaceDestroyed(holder: SurfaceHolder?) {
                 unRegisterMultiCamera()
+            }*/
+
+            override fun surfaceCreated(holder: SurfaceHolder) {
+                registerMultiCamera()
+
+            }
+
+            override fun surfaceChanged(
+                holder: SurfaceHolder,
+                format: Int,
+                width: Int,
+                height: Int
+            ) {
+                 surfaceSizeChanged(width, height)
+
+            }
+
+            override fun surfaceDestroyed(holder: SurfaceHolder) {
+                 unRegisterMultiCamera()
+
             }
         })
     }
@@ -227,6 +279,7 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
      * @return current camera, see [MultiCameraClient.ICamera]
      */
     protected fun getCurrentCamera(): MultiCameraClient.ICamera? {
+        Log.d("Keerthi","askjfbaldfba");
         return try {
             mCurrentCamera?.get(2, TimeUnit.SECONDS)
         } catch (e: Exception) {
@@ -925,6 +978,8 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
     protected open fun getCameraRequest(): CameraRequest {
         return CameraRequest.Builder()
 
+            .setPreviewWidth(640)
+            .setPreviewHeight(480)
             .setRenderMode(CameraRequest.RenderMode.OPENGL)
             .setDefaultRotateType(RotateType.ANGLE_0)
             .setAudioSource(CameraRequest.AudioSource.SOURCE_SYS_MIC)

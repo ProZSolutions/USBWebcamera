@@ -3,17 +3,20 @@ apply plugin: 'com.android.library'
 import org.apache.tools.ant.taskdefs.condition.Os
 
 android {
-	compileSdkVersion rootProject.ext.versionCompiler
-	buildToolsVersion rootProject.ext.versionBuildTool
+	//compileSdkVersion rootProject.ext.versionCompiler
+	//buildToolsVersion rootProject.ext.versionBuildTool
+	compileSdkVersion 34
+	namespace "com.jiangdg.uvccamera"
 
 	compileOptions {
-		sourceCompatibility rootProject.ext.javaSourceCompatibility
-		targetCompatibility rootProject.ext.javaTargetCompatibility
+		sourceCompatibility JavaVersion.VERSION_17
+		targetCompatibility JavaVersion.VERSION_17
 	}
 
     defaultConfig {
-        minSdkVersion rootProject.ext.minSdkVersion
-		targetSdkVersion rootProject.ext.versionTarget
+		//applicationId "com.jiangdg.uvccamera"
+        minSdkVersion 21
+		targetSdkVersion 34
     }
 
 	lintOptions {
@@ -69,7 +72,7 @@ clean.dependsOn 'ndkClean'
 
 dependencies {
     implementation fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
-	implementation "androidx.appcompat:appcompat:${androidXVersion}"
+	implementation "androidx.appcompat:appcompat:1.7.0"
 	implementation 'com.elvishew:xlog:1.11.0'
 //	implementation project(path: ':libuvccommon')
 }

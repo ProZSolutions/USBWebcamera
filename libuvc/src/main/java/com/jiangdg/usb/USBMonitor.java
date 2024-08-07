@@ -37,6 +37,7 @@ import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 
 import androidx.annotation.RequiresApi;
@@ -56,10 +57,12 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class USBMonitor {
+public final class USBMonitor implements MyBroadcastReceiver.MyCallback{
 
 	public static boolean DEBUG = true;	// TODO set false on production
 	private static final String TAG = "USBMonitor";
+	private MyBroadcastReceiver mUsbReceiver;
+
 
 	private static final String ACTION_USB_PERMISSION_BASE = "com.serenegiant.USB_PERMISSION.";
 	private final String ACTION_USB_PERMISSION = ACTION_USB_PERMISSION_BASE + hashCode();
@@ -83,6 +86,58 @@ public final class USBMonitor {
 	 */
 	private final Handler mAsyncHandler;
 	private volatile boolean destroyed;
+
+	@Override
+	public void onEventReceived(Intent intent) {
+		if (destroyed) return;
+		final String action = intent.getAction();
+		if (ACTION_USB_PERMISSION.equals(action)) {
+			Log.d("OTGConnection"," actioin usb permissin ");
+			// when received the result of requesting USB permission
+			synchronized (USBMonitor.this) {
+				final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+				if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+					Log.d("OTGConnection"," extra permission granded ");
+					if (device != null) {
+						Log.d("OTGConnection"," device not null ");
+						// get permission, call onConnect
+						if (DEBUG)
+							Log.d("OTGConnection"," DEBUG");
+						XLogWrapper.w(TAG, "get permission success in mUsbReceiver");
+						processConnect(device);
+					}
+				} else {
+					// failed to get permission
+					Log.d("OTGConnection"," action ub permission not granded ");
+					if (DEBUG)
+						Log.d("OTGConnection"," failed musbreceic");
+					XLogWrapper.w(TAG, "get permission failed in mUsbReceiver");
+					processCancel(device);
+				}
+			}
+		} else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
+			Log.d("OTGConnection"," device attached ");
+			final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+			updatePermission(device, hasPermission(device));
+			processAttach(device);
+		} else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
+			Log.d("OTGConnection"," device detaected ");
+			// when device removed
+			final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+			if (device != null) {
+				Log.d("OTGConnection"," device not null ");
+				UsbControlBlock ctrlBlock = mCtrlBlocks.remove(device);
+				if (ctrlBlock != null) {
+					// cleanup
+					ctrlBlock.close();
+				}
+				mDeviceCounts = 0;
+				processDettach(device);
+			}
+		}
+
+	}
+
 	/**
 	 * USB機器の状態変更時のコールバックリスナー
 	 */
@@ -117,7 +172,9 @@ public final class USBMonitor {
 		public void onCancel(UsbDevice device);
 	}
 
+
 	public USBMonitor(final Context context, final OnDeviceConnectListener listener) {
+		Log.d("USBMONITORCALLED"," constructor called");
 		if (DEBUG) XLogWrapper.v(TAG, "USBMonitor:Constructor");
 		if (listener == null)
 			throw new IllegalArgumentException("OnDeviceConnectListener should not null.");
@@ -134,6 +191,8 @@ public final class USBMonitor {
 	 * never reuse again
 	 */
 	public void destroy() {
+		Log.d("USBMONITORCALLED"," destroy called");
+
 		if (DEBUG) XLogWrapper.i(TAG, "destroy:");
 		unregister();
 		if (!destroyed) {
@@ -168,18 +227,25 @@ public final class USBMonitor {
 	 */
 	@SuppressLint({"UnspecifiedImmutableFlag", "WrongConstant"})
 	public synchronized void register() throws IllegalStateException {
+		Log.d("USBMONITORCALLED"," register called");
+
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		if (mPermissionIntent == null) {
+			Log.d("OTGConnection"," permission not null ");
 			if (DEBUG) XLogWrapper.i(TAG, "register:");
 			final Context context = mWeakContext.get();
 			if (context != null) {
+				Log.d("OTGConnection"," context not null ");
 				if (Build.VERSION.SDK_INT >= 31) {
+					Log.d("OTGConnection"," buid not null ");
 					// avoid acquiring intent data failed in receiver on Android12
 					// when using PendingIntent.FLAG_IMMUTABLE
 					// because it means Intent can't be modified anywhere -- jiangdg/20220929
 					int PENDING_FLAG_IMMUTABLE = 1<<25;
-					mPermissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), PENDING_FLAG_IMMUTABLE);
+					mPermissionIntent = PendingIntent.getBroadcast(context,
+							0, new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE);
 				} else {
+					Log.d("OTGConnection"," version min 31 ");
 					mPermissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
 				}
 				final IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
@@ -191,6 +257,8 @@ public final class USBMonitor {
 			// start connection check
 			mDeviceCounts = 0;
 			mAsyncHandler.postDelayed(mDeviceCheckRunnable, 1000);
+		}else{
+			Log.d("OTGConnection"," mPermission null ");
 		}
 	}
 
@@ -199,6 +267,8 @@ public final class USBMonitor {
 	 * @throws IllegalStateException
 	 */
 	public synchronized void unregister() throws IllegalStateException {
+		Log.d("USBMONITORCALLED"," unreg called");
+
 		// 接続チェック用Runnableを削除
 		mDeviceCounts = 0;
 		if (!destroyed) {
@@ -219,6 +289,8 @@ public final class USBMonitor {
 	}
 
 	public synchronized boolean isRegistered() {
+		Log.d("USBMONITORCALLED"," isreg called");
+
 		return !destroyed && (mPermissionIntent != null);
 	}
 
@@ -228,6 +300,8 @@ public final class USBMonitor {
 	 * @throws IllegalStateException
 	 */
 	public void setDeviceFilter(final DeviceFilter filter) throws IllegalStateException {
+		Log.d("USBMONITORCALLED"," devfilete called");
+
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		mDeviceFilters.clear();
 		mDeviceFilters.add(filter);
@@ -270,6 +344,8 @@ public final class USBMonitor {
 	 * @throws IllegalStateException
 	 */
 	public void addDeviceFilter(final List<DeviceFilter> filters) throws IllegalStateException {
+		Log.d("USBMONITORCALLED"," adddevfil called");
+
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		mDeviceFilters.addAll(filters);
 	}
@@ -279,6 +355,8 @@ public final class USBMonitor {
 	 * @param filters
 	 */
 	public void removeDeviceFilter(final List<DeviceFilter> filters) throws IllegalStateException {
+		Log.d("USBMONITORCALLED"," rmvdevfil called");
+
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		mDeviceFilters.removeAll(filters);
 	}
@@ -299,6 +377,8 @@ public final class USBMonitor {
 	 * @throws IllegalStateException
 	 */
 	public List<UsbDevice> getDeviceList() throws IllegalStateException {
+		Log.d("USBMONITORCALLED"," devlist called");
+
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		return getDeviceList(mDeviceFilters);
 	}
@@ -310,6 +390,8 @@ public final class USBMonitor {
 	 * @throws IllegalStateException
 	 */
 	public List<UsbDevice> getDeviceList(final List<DeviceFilter> filters) throws IllegalStateException {
+		Log.d("USBMONITORCALLED","getdevlis");
+
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		// get detected devices
 		final HashMap<String, UsbDevice> deviceList = mUsbManager.getDeviceList();
@@ -361,6 +443,8 @@ public final class USBMonitor {
 	 * @throws IllegalStateException
 	 */
 	public Iterator<UsbDevice> getDevices() throws IllegalStateException {
+		Log.d("USBMONITORCALLED"," getdevices called");
+
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		Iterator<UsbDevice> iterator = null;
 		final HashMap<String, UsbDevice> list = mUsbManager.getDeviceList();
@@ -402,6 +486,8 @@ public final class USBMonitor {
 	 * @throws IllegalStateException
 	 */
 	public final boolean hasPermission(final UsbDevice device) throws IllegalStateException {
+		Log.d("USBMONITORCALLED"," has premisison called");
+
 		if (destroyed) {
 			XLogWrapper.w(TAG, "hasPermission failed, camera destroyed!");
 			return false;
@@ -416,6 +502,8 @@ public final class USBMonitor {
 	 * @return hasPermission
 	 */
 	private boolean updatePermission(final UsbDevice device, final boolean hasPermission) {
+		Log.d("USBMONITORCALLED"," update permissino called");
+
 		// fix api >= 29, permission SecurityException
 		try {
 			final int deviceKey = getDeviceKey(device, true);
@@ -441,6 +529,8 @@ public final class USBMonitor {
 	 * @return true if fail to request permission
 	 */
 	public synchronized boolean requestPermission(final UsbDevice device) {
+		Log.d("USBMONITORCALLED"," request permission called");
+
 //		if (DEBUG) XLogWrapper.v(TAG, "requestPermission:device=" + device);
 		boolean result = false;
 		if (isRegistered()) {
@@ -498,49 +588,6 @@ public final class USBMonitor {
 	/**
 	 * BroadcastReceiver for USB permission
 	 */
-	private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
-
-		@Override
-		public void onReceive(final Context context, final Intent intent) {
-			if (destroyed) return;
-			final String action = intent.getAction();
-			if (ACTION_USB_PERMISSION.equals(action)) {
-				// when received the result of requesting USB permission
-				synchronized (USBMonitor.this) {
-					final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-					if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-						if (device != null) {
-							// get permission, call onConnect
-							if (DEBUG)
-								XLogWrapper.w(TAG, "get permission success in mUsbReceiver");
-							processConnect(device);
-						}
-					} else {
-						// failed to get permission
-						if (DEBUG)
-							XLogWrapper.w(TAG, "get permission failed in mUsbReceiver");
-						processCancel(device);
-					}
-				}
-			} else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
-				final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-				updatePermission(device, hasPermission(device));
-				processAttach(device);
-			} else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-				// when device removed
-				final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-				if (device != null) {
-					UsbControlBlock ctrlBlock = mCtrlBlocks.remove(device);
-					if (ctrlBlock != null) {
-						// cleanup
-						ctrlBlock.close();
-					}
-					mDeviceCounts = 0;
-					processDettach(device);
-				}
-			}
-		}
-	};
 
 	/** number of connected & detected devices */
 	private volatile int mDeviceCounts = 0;
@@ -550,6 +597,8 @@ public final class USBMonitor {
 	private final Runnable mDeviceCheckRunnable = new Runnable() {
 		@Override
 		public void run() {
+			Log.d("USBMONITORCALLED"," devrun called");
+
 			if (destroyed) return;
 			final List<UsbDevice> devices = getDeviceList();
 			final int n = devices.size();

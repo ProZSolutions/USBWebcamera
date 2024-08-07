@@ -26,6 +26,7 @@ import com.jiangdg.ausbc.render.env.RotateType
  */
 @Keep
 class CameraRequest private constructor() {
+
     var previewWidth: Int = DEFAULT_WIDTH
     var previewHeight: Int = DEFAULT_HEIGHT
     var renderMode: RenderMode = RenderMode.OPENGL
@@ -237,6 +238,8 @@ class CameraRequest private constructor() {
     }
 
     companion object {
+       /* private const val DEFAULT_WIDTH = 640
+        private const val DEFAULT_HEIGHT = 480*/
         private const val DEFAULT_WIDTH = 640
         private const val DEFAULT_HEIGHT = 480
     }

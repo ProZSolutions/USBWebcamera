@@ -11,13 +11,14 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.BaseViewHolder
 import com.jiangdg.ausbc.MultiCameraClient
+import com.jiangdg.ausbc.R
 import com.jiangdg.ausbc.base.MultiCameraFragment
 import com.jiangdg.ausbc.callback.ICameraStateCallBack
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.camera.CameraUVC
 import com.jiangdg.ausbc.camera.bean.CameraRequest
+import com.jiangdg.ausbc.databinding.FragmentMultiCameraBinding
 import com.jiangdg.ausbc.utils.ToastUtils
-import com.jiangdg.demo.databinding.FragmentMultiCameraBinding
 
 /** Multi-road camera demo
  *
@@ -176,9 +177,17 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
     }
 
     private fun getCameraRequest(): CameraRequest {
+        Log.d("PreviewOption"," multicamerafrag ");
         return CameraRequest.Builder()
             .setPreviewWidth(640)
             .setPreviewHeight(480)
+
+
+
+
+
+            /*.setPreviewWidth(640)
+            .setPreviewHeight(480)*/
             .create()
     }
 

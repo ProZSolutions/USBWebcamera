@@ -14,5 +14,7 @@ data class CameraStatus(val code: Int, val message: String? = null) {
         const val STOP = 2
         const val ERROR = -1
         const val ERROR_PREVIEW_SIZE = -2
+        const val PAUSE =3
+        const val RESUME =4
     }
 }

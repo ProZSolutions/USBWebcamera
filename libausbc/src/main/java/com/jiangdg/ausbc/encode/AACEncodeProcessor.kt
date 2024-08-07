@@ -174,7 +174,7 @@ class AACEncodeProcessor(strategy: IAudioStrategy? = null) : AbstractProcessor(f
                 releaseAudioRecord()
                 mMainHandler.post {
                     callBack?.onComplete()
-                }
+                 }
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "stop play mic success.")
                 }

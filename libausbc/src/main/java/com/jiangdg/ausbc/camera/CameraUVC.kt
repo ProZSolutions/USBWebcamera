@@ -20,6 +20,7 @@ import android.content.Context
 import android.graphics.SurfaceTexture
 import android.hardware.usb.UsbDevice
 import android.provider.MediaStore
+import android.util.Log
 import android.view.Surface
 import android.view.SurfaceView
 import android.view.TextureView
@@ -76,6 +77,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     }
 
     override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize> {
+        Log.d("Keerthi","166789");
         val previewSizeList = arrayListOf<PreviewSize>()
         val isMjpegFormat = mCameraRequest?.previewFormat == CameraRequest.PreviewFormat.FORMAT_MJPEG
         if (isMjpegFormat && (mUvcCamera?.supportedSizeList?.isNotEmpty() == true)) {
@@ -107,6 +109,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     }
 
     override fun <T> openCameraInternal(cameraView: T) {
+        Log.d("Keerthi","16843244");
         if (Utils.isTargetSdkOverP(ctx) && !CameraUtils.hasCameraPermission(ctx)) {
             closeCamera()
             postStateEvent(ICameraStateCallBack.State.ERROR, "Has no CAMERA permission.")
@@ -226,6 +229,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     }
 
     override fun closeCameraInternal() {
+        Log.d("Keerthi","1678985586324");
         postStateEvent(ICameraStateCallBack.State.CLOSED)
         isPreviewed = false
         releaseEncodeProcessor()
@@ -237,6 +241,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     }
 
     override fun captureImageInternal(savePath: String?, callback: ICaptureCallBack) {
+        Log.d("Keerthi","8545845612");
         mSaveImageExecutor.submit {
             if (! CameraUtils.hasStoragePermission(ctx)) {
                 mMainHandler.post {

@@ -18,15 +18,21 @@ package com.jiangdg.ausbc.base
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.hardware.usb.UsbDevice
+import android.util.Log
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import com.jiangdg.ausbc.MultiCameraClient
+import com.jiangdg.ausbc.callback.ICameraStateCallBack
+import com.jiangdg.ausbc.callback.ICaptureCallBack
+import com.jiangdg.ausbc.callback.IDeviceConnectCallBack
+import com.jiangdg.ausbc.callback.IEncodeDataCallBack
+import com.jiangdg.ausbc.callback.IPlayCallBack
+import com.jiangdg.ausbc.callback.IPreviewDataCallBack
 import com.jiangdg.ausbc.camera.bean.PreviewSize
 import com.jiangdg.ausbc.camera.bean.CameraRequest
-import com.jiangdg.ausbc.callback.*
-import com.jiangdg.ausbc.camera.CameraUVC
+ import com.jiangdg.ausbc.camera.CameraUVC
 import com.jiangdg.ausbc.render.effect.AbstractEffect
 import com.jiangdg.ausbc.render.env.RotateType
 import com.jiangdg.ausbc.utils.Logger
@@ -51,6 +57,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
     }
 
     override fun initView() {
+        Log.d("Keerthi","e;l;lfddgs");
         when (val cameraView = getCameraView()) {
             is TextureView -> {
                 handleTextureView(cameraView)
@@ -83,22 +90,31 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
     }
 
     protected fun registerMultiCamera() {
+        Log.d("Keerthi","oehjrodglsd g");
         mCameraClient = MultiCameraClient(requireContext(), object : IDeviceConnectCallBack {
             override fun onAttachDev(device: UsbDevice?) {
+                Log.d("Keerthi","onAttachDev   "+device);
                 device ?: return
                 context?.let {
                     if (mCameraMap.containsKey(device.deviceId)) {
+                        Log.d("Keerthi"," return ")
+                        //newly added
+                        requestPermission(device)
+                        //newly added
                         return
                     }
                     generateCamera(it, device).apply {
+                        Log.d("Keerthi","generate camera ")
                         mCameraMap[device.deviceId] = this
                     }
                     // Initiate permission request when device insertion is detected
                     // If you want to open the specified camera, you need to override getDefaultCamera()
                     if (mRequestPermission.get()) {
+                        Log.d("Keerthi"," request permisisin ")
                         return@let
                     }
                     getDefaultCamera()?.apply {
+                        Log.d("Keerthi","getDefault");
                         if (vendorId == device.vendorId && productId == device.productId) {
                             Logger.i(TAG, "default camera pid: $productId, vid: $vendorId")
                             requestPermission(device)
@@ -110,19 +126,24 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
             }
 
             override fun onDetachDec(device: UsbDevice?) {
+                Log.d("Keerthi","devices ");
                 mCameraMap.remove(device?.deviceId)?.apply {
+                    Log.d("Keerthi","setusb ");
                     setUsbControlBlock(null)
                 }
                 mRequestPermission.set(false)
                 try {
+                    Log.d("Keerthi","try bloock ");
                     mCurrentCamera?.cancel(true)
                     mCurrentCamera = null
                 } catch (e: Exception) {
+                    Log.d("Keerthi","exception "+e.message);
                     e.printStackTrace()
                 }
             }
 
             override fun onConnectDev(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
+                Log.d("Keerthi","onconnectdev");
                 device ?: return
                 ctrlBlock ?: return
                 context ?: return
@@ -130,9 +151,11 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
                     setUsbControlBlock(ctrlBlock)
                 }?.also { camera ->
                     try {
+                        Log.d("Keerthi","try 2 block ");
                         mCurrentCamera?.cancel(true)
                         mCurrentCamera = null
                     } catch (e: Exception) {
+                        Log.d("Keerthi","erro2 "+e.message);
                         e.printStackTrace()
                     }
                     mCurrentCamera = SettableFuture()
@@ -143,6 +166,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
             }
 
             override fun onDisConnectDec(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
+                Log.d("Keerthi","onDisConnectDec");
                 closeCamera()
                 mRequestPermission.set(false)
             }
@@ -161,6 +185,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
     }
 
     protected fun unRegisterMultiCamera() {
+        Log.d("Keerthi",",x bx, x");
         mCameraMap.values.forEach {
             it.closeCamera()
         }
@@ -173,8 +198,35 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
     protected fun getDeviceList() = mCameraClient?.getDeviceList()
 
     private fun handleTextureView(textureView: TextureView) {
+        Log.d("Keerthi","dsgksldgbsldg");
+
+
         textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(
+                surface: SurfaceTexture,
+                width: Int,
+                height: Int
+            ) {
+                registerMultiCamera()
+             }
+
+            override fun onSurfaceTextureSizeChanged(
+                surface: SurfaceTexture,
+                width: Int,
+                height: Int
+            ) {
+                 surfaceSizeChanged(width, height)
+            }
+
+            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+                 unRegisterMultiCamera()
+                return false
+            }
+
+            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
+             }
+
+           /* override fun onSurfaceTextureAvailable(
                 surface: SurfaceTexture?,
                 width: Int,
                 height: Int
@@ -196,13 +248,31 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
             }
 
             override fun onSurfaceTextureUpdated(surface: SurfaceTexture?) {
-            }
+            }*/
         }
     }
 
     private fun handleSurfaceView(surfaceView: SurfaceView) {
+        Log.d("Keerthi","x,cb x, slkdsnl");
         surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder?) {
+            override fun surfaceCreated(holder: SurfaceHolder) {
+                 registerMultiCamera()
+            }
+
+            override fun surfaceChanged(
+                holder: SurfaceHolder,
+                format: Int,
+                width: Int,
+                height: Int
+            ) {
+                 surfaceSizeChanged(width, height)
+            }
+
+            override fun surfaceDestroyed(holder: SurfaceHolder) {
+                 unRegisterMultiCamera()
+            }
+
+          /*  override fun surfaceCreated(holder: SurfaceHolder?) {
                 registerMultiCamera()
             }
 
@@ -217,7 +287,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
 
             override fun surfaceDestroyed(holder: SurfaceHolder?) {
                 unRegisterMultiCamera()
-            }
+            }*/
         })
     }
 
@@ -227,9 +297,12 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * @return current camera, see [MultiCameraClient.ICamera]
      */
     protected fun getCurrentCamera(): MultiCameraClient.ICamera? {
+        Log.d("Keerthi","lsbdgsldgs ");
         return try {
+            Log.d("Keerthi","come try ");
             mCurrentCamera?.get(2, TimeUnit.SECONDS)
         } catch (e: Exception) {
+            Log.d("Keerthi"," error "+e.message)
             e.printStackTrace()
             null
         }
@@ -241,6 +314,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * @param device see [UsbDevice]
      */
     protected fun requestPermission(device: UsbDevice?) {
+        Log.d("Keerthi","gskdbgdskbjsdfkb");
         mRequestPermission.set(true)
         mCameraClient?.requestPermission(device)
     }
@@ -253,6 +327,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * @return Inheritor assignment camera api policy
      */
     protected open fun generateCamera(ctx: Context, device: UsbDevice): MultiCameraClient.ICamera {
+        Log.d("Keerthi","sdkjgsdlg ag gadgad");
         return CameraUVC(ctx, device)
     }
 
@@ -270,6 +345,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * @param savePath custom image path
      */
     protected fun captureImage(callBack: ICaptureCallBack, savePath: String? = null) {
+        Log.d("Keerthi","sdjgvkasdbsligs");
         getCurrentCamera()?.captureImage(callBack, savePath)
     }
 
@@ -285,7 +361,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * @param usbDevice camera usb device
      */
     protected fun switchCamera(usbDevice: UsbDevice) {
-
+        Log.d("Keerthi","sdkbsglasdbgsd");
         getCurrentCamera()?.closeCamera()
         try {
             Thread.sleep(500)
@@ -397,6 +473,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * @param durationInSec divided record duration time in seconds
      */
     protected fun captureVideoStart(callBack: ICaptureCallBack, path: String ?= null, durationInSec: Long = 0L) {
+        Log.d("Keerthi","dflisdbglsdgs ");
         getCurrentCamera()?.captureVideoStart(callBack, path, durationInSec)
     }
 
@@ -404,6 +481,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * Capture video stop
      */
     protected fun captureVideoStop() {
+        Log.d("Keerthi","dgsdgsdsv  asfas ");
         getCurrentCamera()?.captureVideoStop()
     }
 
@@ -414,6 +492,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * @param path custom save path
      */
     protected fun captureAudioStart(callBack: ICaptureCallBack, path: String ?= null) {
+        Log.d("Keerthi",",adl.soinvdll sdlkndsvl");
         getCurrentCamera()?.captureAudioStart(callBack, path)
     }
 
@@ -421,6 +500,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * Capture audio stop
      */
     protected fun captureAudioStop() {
+        Log.d("Keerthi","zdfbakdad ");
          getCurrentCamera()?.captureAudioStop()
     }
 
@@ -430,6 +510,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * @param callBack play mic in real-time, see [IPlayCallBack]
      */
     protected fun startPlayMic(callBack: IPlayCallBack? = null) {
+        Log.d("Keerthi","xckj dskfbsd lnzx ");
         getCurrentCamera()?.startPlayMic(callBack)
     }
 
@@ -446,6 +527,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * @return camera preview size, see [PreviewSize]
      */
     protected fun getCurrentPreviewSize(): PreviewSize? {
+        Log.d("Keerthi","dkgafnlan ");
         return getCurrentCamera()?.getCameraRequest()?.let {
             PreviewSize(it.previewWidth, it.previewHeight)
         }
@@ -924,8 +1006,10 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
         /*.setPreviewWidth(640)
         .setPreviewHeight(480)*/
     protected open fun getCameraRequest(): CameraRequest {
+            Log.d("PreviewOption",",camera frag ");
         return CameraRequest.Builder()
-
+            .setPreviewWidth(640)
+            .setPreviewHeight(480)
             .setRenderMode(CameraRequest.RenderMode.OPENGL)
             .setDefaultRotateType(RotateType.ANGLE_0)
             .setAudioSource(CameraRequest.AudioSource.SOURCE_SYS_MIC)

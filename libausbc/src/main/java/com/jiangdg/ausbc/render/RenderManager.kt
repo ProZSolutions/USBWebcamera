@@ -19,10 +19,13 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.SurfaceTexture
+import android.net.Uri
 import android.opengl.EGLContext
 import android.os.*
 import android.provider.MediaStore
+import android.util.Log
 import android.view.Surface
+import androidx.core.content.FileProvider
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
 import com.jiangdg.ausbc.render.env.RotateType
@@ -34,6 +37,7 @@ import com.jiangdg.ausbc.utils.bus.EventBus
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.text.SimpleDateFormat
@@ -93,6 +97,7 @@ class RenderManager(
         SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
     }
     private val mCameraDir by lazy {
+        Log.d("FilePathrror"," render manager")
         "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/ProzUSBCamera"
     }
 
@@ -437,7 +442,7 @@ class RenderManager(
         // 写入文件
         // glReadPixels读取的是大端数据，但是我们保存的是小端
         // 故需要将图片上下颠倒为正
-        var fos: FileOutputStream? = null
+      /*  var fos: FileOutputStream? = null
         try {
             fos = FileOutputStream(path)
             GLBitmapUtils.transFrameBufferToBitmap(mFBOBufferId, width, height).apply {
@@ -455,12 +460,36 @@ class RenderManager(
             } catch (e: IOException) {
                 Logger.e(TAG, "Failed to write file, err = ${e.localizedMessage}", e)
             }
+        }*/
+        val contentResolver = mContext.contentResolver;
+        var outputStream: OutputStream? = null
+        Log.d("FilePathrror"," path "+path)
+
+        try {
+            val uri = getUriFromFilePath(mContext, path)
+            Log.d("FilePathrror"," uri "+uri)
+            outputStream = contentResolver.openOutputStream(uri)
+            GLBitmapUtils.transFrameBufferToBitmap(mFBOBufferId, width, height).apply {
+                outputStream?.let { compress(Bitmap.CompressFormat.JPEG, 100, it) }
+                recycle()
+            }
+        } catch (e: IOException) {
+            mMainHandler.post {
+                mCaptureDataCb?.onError(e.localizedMessage)
+            }
+            Log.d("FilePathrror", "Failed to write file, err = ${e.localizedMessage}", e)
+        } finally {
+            try {
+                outputStream?.close()
+            } catch (e: IOException) {
+                Log.d("FilePathrror", "Failed to close output stream, err = ${e.localizedMessage}", e)
+            }
         }
         //Judge whether it is saved successfully
         //Update gallery if successful
         val file = File(path)
         if (file.length() == 0L) {
-            Logger.e(TAG, "Failed to save file $path")
+            Log.d("FilePathrror", "Failed to save file $path")
             file.delete()
             mCaptureState.set(false)
             return
@@ -468,11 +497,11 @@ class RenderManager(
         val values = ContentValues()
         values.put(MediaStore.Images.ImageColumns.TITLE, title)
         values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
-        values.put(MediaStore.Images.ImageColumns.DATA, path)
+     //   values.put(MediaStore.Images.ImageColumns.DATA, path)
         values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
         values.put(MediaStore.Images.ImageColumns.WIDTH, width)
         values.put(MediaStore.Images.ImageColumns.HEIGHT, height)
-        mContext.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+       val uri= mContext.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
         mMainHandler.post {
             mCaptureDataCb?.onComplete(path)
         }
@@ -482,6 +511,10 @@ class RenderManager(
         }
     }
 
+    fun getUriFromFilePath(context: Context, filePath: String): Uri {
+        val file = File(filePath)
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
     private fun emitFrameRate() {
         mFrameRate++
         mEndTime = System.currentTimeMillis()

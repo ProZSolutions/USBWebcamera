@@ -36,7 +36,7 @@ class AudioStrategySystem : IAudioStrategy {
     private var mAudioRecord: AudioRecord? = null
 
     override fun initAudioRecord() {
-        try {
+         try {
             Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
             mAudioRecord = AudioRecord(AUDIO_RECORD_SOURCE, SAMPLE_RATE,
                 CHANNEL_IN_CONFIG, AUDIO_FORMAT_16BIT, mBufferSize

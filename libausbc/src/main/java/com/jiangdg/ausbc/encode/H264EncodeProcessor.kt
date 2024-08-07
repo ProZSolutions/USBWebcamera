@@ -18,6 +18,7 @@ package com.jiangdg.ausbc.encode
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.util.Log
 import android.view.Surface
 import com.jiangdg.ausbc.callback.IEncodeDataCallBack
 import com.jiangdg.ausbc.utils.Logger
@@ -59,7 +60,7 @@ class H264EncodeProcessor(
             if (gLESRender) {
                 mReadyListener?.onReady(mMediaCodec?.createInputSurface())
             }
-            mMediaCodec?.start()
+             mMediaCodec?.start()
             mEncodeState.set(true)
             doEncodeData()
             Logger.i(TAG, "init h264 media codec success, bit = ")
@@ -144,6 +145,9 @@ class H264EncodeProcessor(
         } else if (width >= 640 || height >= 640) {
             bitRate *= 1.4F
         }
+
+        Log.d("PreviewOption","h264 wid "+width+" height "+height+"  bit rate "+bitRate);
+
         return bitRate.toInt()
     }
 

@@ -19,6 +19,7 @@ import android.Manifest
 import android.Manifest.permission.*
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -31,17 +32,19 @@ import android.util.Log
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker
-import androidx.fragment.app.Fragment
+ import androidx.fragment.app.Fragment
 import com.gyf.immersionbar.ImmersionBar
 import com.jiangdg.ausbc.utils.ToastUtils
 import com.jiangdg.ausbc.utils.Utils
-import com.jiangdg.demo.databinding.ActivityMainBinding
-import java.io.File
+ import java.io.File
 import android.hardware.Camera
 import android.hardware.usb.UsbManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker
+import androidx.core.content.getSystemService
+import com.jiangdg.ausbc.R
+import com.jiangdg.ausbc.databinding.ActivityMainBinding
 
 
 /**
@@ -63,52 +66,41 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
     }
 
-    fun isUsbHostSupported(context: Context): Boolean {
-        val packageManager = context.packageManager
-            return packageManager.hasSystemFeature(PackageManager.FEATURE_USB_HOST)
-    }
-    fun isOtgSupported(context: Context): Boolean {
-        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
-        return usbManager != null && isUsbHostSupported(context)
-    }
+/*     fun getScreenResolution(context: Context): Pair<Int, Int> {
+        val displayMetrics = DisplayMetrics()
+        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+        windowManager.defaultDisplay.getMetrics(displayMetrics)
+        val width = displayMetrics.widthPixels
+        val height = displayMetrics.heightPixels
+        return Pair(width, height)
+    }*/
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStatusBar()
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
-        val (screenWidth, screenHeight) = getScreenDimensions(this)
+        //val (screenWidth, screenHeight) = getScreenDimensions(this)
+//        val (width, height) = getScreenResolution(this)
+      //  Log.d("ScreenResolution"," with "+width+"   height "+height);
+
+
+
+
         try {
-            // Check if USB debugging is enabled
-
-            //                startActivity(Intent(Settings.ACTION_SETTINGS))
 
 
-
-
-            if(isUsbHostSupported(this)){
-                //ToastUtils.show("USB  HOSTING SUPPORTED")
-            }else{
-               // ToastUtils.show("USB HOSTING NOT SUPPORTED")
-            }
-
-            if(isOtgSupported(this)){
-               // ToastUtils.show("OTP SUPPORTED")
-            }else{
-              //  ToastUtils.show("OTP NOT SUPPORTED")
-            }
-                val camera = Camera.open()
-                val previewSizes = camera.parameters.supportedPreviewSizes
-                val optimalSize = getOptimalPreviewSize(previewSizes, screenWidth, screenHeight)
-
-                optimalSize?.let {
-                    Log.d("FilePath"," screen width "+optimalSize.width+"  height "+optimalSize.height)
-                }
-
-
-                if (!allPermissionsGranted()) {
-                    Log.d("FilePath"," permisno no ");
-                    ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+               /* if (!allPermissionsGranted()) {
+                    Log.d("FilePath"," permisno not granded ");
+                    //ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+                    if (isManageExternalStoragePermissionGranted()) {
+                        // Permission is granted, proceed with your file operations
+                    } else {
+                        // Request permission
+                        requestManageExternalStoragePermission()
+                    }
                 } else {
+                    Log.d("FilePath"," permisison grande ");
                     createDCIMFolder()
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -124,32 +116,72 @@ class MainActivity : AppCompatActivity() {
                     Log.d("FilePath"," view image ")
                     replaceDemoFragment(DemoFragment())
 
-                }
+                }*/
+
+
+            if (arePermissionsGranted()) {
+                Log.d("FilePermisison"," all granded ");
+                // Permissions are granted, proceed with your logic
+            } else {
+                requestPermissionsNew()
+            }
+
+
             //}
         } catch (e: Exception) {
-            Log.e("CheckUsbDebugging", "Error checking USB debugging status", e)
-            Toast.makeText(this, "Enable OTG Connection in Setting "+e.message, Toast.LENGTH_LONG).show()
+            Log.d("FilePath", "Error checking USB debugging status", e)
+            Toast.makeText(this,  e.message, Toast.LENGTH_LONG).show()
             startActivity(Intent(Settings.ACTION_SETTINGS))
         }
 
 
      }
 
+    private fun requestPermissionsNew() {
+        Log.d("FilePermisison"," request file permission ");
+        ActivityCompat.requestPermissions(this,
+            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.CAMERA,Manifest.permission.RECORD_AUDIO),
+            REQUEST_CODE_PERMISSIONS)
+    }
+    private fun arePermissionsGranted(): Boolean {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+    }
 
 
+    private fun isManageExternalStoragePermissionGranted(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Environment.isExternalStorageManager()
+        } else {
+            // For Android versions below 11, manage external storage is not applicable
+            true
+        }
+    }
 
 
     private fun requestManageExternalStoragePermission() {
-        val packageName = this?.packageName
-
-        Log.d("FilePath"," read external  ");
-        val intent = Intent(Settings.ACTION_MANAGE_ALL_APPLICATIONS_SETTINGS)
-        intent.data = Uri.parse("package:"+packageName)
-        startActivityForResult(intent, 100)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            try {
+                startActivityForResult(intent, 1200)
+            } catch (e: Exception) {
+                // Handle the case where the intent action is not supported
+                // This might happen on certain devices or custom ROMs
+                // You might need to inform the user or handle this gracefully
+            }
+        } else {
+            // For versions below Android 11, request regular storage permissions if needed
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        Log.d("requestPernmiss"," on activity result "+requestCode+" res "+resultCode+" data "+data)
         if (requestCode ==100) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (Environment.isExternalStorageEmulated()) {
@@ -159,28 +191,36 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }else if (requestCode == REQUEST_CODE_PERMISSIONS) {
+            Log.d("FilePath"," on activit "+allPermissionsGranted());
             if (allPermissionsGranted()) {
                 createDCIMFolder()
             } else {
+                Log.d("FilePath"," permission not granded ");
                 // Handle the case where permissions are not granted
+            }
+        }else if (requestCode == 1200) {
+            if (isManageExternalStoragePermissionGranted()) {
+                // Permission granted, proceed with your file operations
+            } else {
+                // Permission denied, handle accordingly
             }
         }
     }
     private fun createDCIMFolder() {
         val dcimPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
         val newFolder = File(dcimPath, "ProzUSBCamera")
-        Log.d("FilePath"," crewate fol ");
+        Log.d("FilePathrror"," crewate fol ");
         if (!newFolder.exists()) {
             val wasSuccessful = newFolder.mkdir()
             if (wasSuccessful) {
                 // Folder created successfully
-                Log.d("FilePath"," cretar ");
+                Log.d("FilePathrror"," cretar ");
             } else {
                 // Failed to create folder
-                Log.d("FilePath", " no ");
+                Log.d("FilePathrror", " no ");
             }
         } else {
-            Log.d("FilePath"," already ");
+            Log.d("FilePathrror"," already ");
             // Folder already exists
         }
     }
@@ -231,59 +271,93 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun replaceDemoFragment(fragment: Fragment) {
-        val hasCameraPermission = PermissionChecker.checkSelfPermission(this, CAMERA)
+       /* val hasCameraPermission = PermissionChecker.checkSelfPermission(this, CAMERA)
         val hasStoragePermission =
             PermissionChecker.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE)
+        Log.d("requestPernmiss"," replace has cam " +hasCameraPermission+" storage "+hasStoragePermission);
+
         if (hasCameraPermission != PermissionChecker.PERMISSION_GRANTED || hasStoragePermission != PermissionChecker.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, CAMERA)) {
                 ToastUtils.show(R.string.permission_tip)
+            }else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                        addCategory(Intent.CATEGORY_DEFAULT)
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivityForResult(intent, 150)
+                }
             }
-            ActivityCompat.requestPermissions(
+            Log.d("requestPernmiss"," replace Demo Frag" );
+             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(CAMERA, WRITE_EXTERNAL_STORAGE, RECORD_AUDIO),
                 REQUEST_CAMERA
             )
             return
-        }
+        }*/
         val transaction = supportFragmentManager.beginTransaction()
         transaction.replace(R.id.fragment_container, fragment)
         transaction.commitAllowingStateLoss()
     }
+
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
+        Log.d("requestPernmiss"," resul" +requestCode+"  camera "+ REQUEST_CAMERA+"  storage "+
+        REQUEST_STORAGE);
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CODE_PERMISSIONS) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d("FilePermisison"," permission granded ")
+                createDCIMFolder()
+                replaceDemoFragment(DemoFragment())
+                // Permission granted, proceed with your logic
+            } else {
+                // Permission denied, show a message to the user
+                Log.d("FilePermisison"," permission not granded "+grantResults.size);
+                createDCIMFolder()
+                replaceDemoFragment(DemoFragment())
+            }
+        }else{
         when (requestCode) {
             REQUEST_CAMERA -> {
+                Log.d("requestPernmiss", " request came ");
                 val hasCameraPermission = PermissionChecker.checkSelfPermission(this, CAMERA)
                 if (hasCameraPermission == PermissionChecker.PERMISSION_DENIED) {
                     ToastUtils.show(R.string.permission_tip)
                     return
                 }
-//                replaceDemoFragment(DemoMultiCameraFragment())
                 replaceDemoFragment(DemoFragment())
-//                replaceDemoFragment(GlSurfaceFragment())
             }
+
             REQUEST_STORAGE -> {
+                Log.d("requestPernmiss", " storage ");
                 val hasCameraPermission =
                     PermissionChecker.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE)
                 if (hasCameraPermission == PermissionChecker.PERMISSION_DENIED) {
                     ToastUtils.show(R.string.permission_tip)
                     return
                 }
+                replaceDemoFragment(DemoFragment())
                 // todo
             }
+
             else -> {
             }
+        }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         immersionBar= null
+        //unregisterReceiver(usbReceiver)
+
+
     }
 
     private fun setStatusBar() {

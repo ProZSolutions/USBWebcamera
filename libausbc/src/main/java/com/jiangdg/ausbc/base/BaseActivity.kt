@@ -16,6 +16,7 @@
 package com.jiangdg.ausbc.base
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -31,6 +32,8 @@ abstract class BaseActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(getRootView(layoutInflater))
+        Log.d("Keerthi","15");
+
         initView()
         initData()
         ActivityStackUtils.pushActivity(this)
