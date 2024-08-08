@@ -398,6 +398,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             }
 
             override fun onError(error: String?) {
+                Log.d("FilePathrror"," main error "+error)
                 ToastUtils.show(error ?: "未知异常")
                 isCapturingVideoOrAudio = false
                 mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.UNDO)
@@ -414,6 +415,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 mViewBinding.lensFacingBtn1.visibility = View.VISIBLE
                 mViewBinding.recTimerLayout.visibility = View.GONE
                 stopMediaTimer()
+                Log.d("FilePathrror"," path err "+path)
                 ToastUtils.show(path ?: "error")
             }
 
@@ -443,6 +445,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
             override fun onError(error: String?) {
                 ToastUtils.show(error ?: "未知异常")
+                Log.d("FilePathrror"," vido "+error)
                 isCapturingVideoOrAudio = false
                 mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.UNDO)
                 stopMediaTimer()
@@ -450,6 +453,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
             override fun onComplete(path: String?) {
                 URIpath = path;
+                Log.d("FilePathrror"," URI PAth "+path)
                 ToastUtils.show(path ?: "")
                 isCapturingVideoOrAudio = false
                 mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.UNDO)
@@ -475,6 +479,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
             override fun onError(error: String?) {
                 ToastUtils.show(error ?: "未知异常")
+                Log.d("FilePathrror"," capture image "+error)
                 mViewBinding.albumPreviewIv.cancelAnimation()
                 mViewBinding.albumPreviewIv.setNewImageFlag(false)
             }
@@ -741,7 +746,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
             }
         } catch (e: Exception) {
-            Log.d("FilePath"," file error "+e.localizedMessage)
+            Log.d("FilePathrror"," file error "+e.localizedMessage)
             ToastUtils.show("open error: ${e.localizedMessage}")
         }
     }
@@ -774,297 +779,301 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         val packageManager = requireContext().packageManager
 
         val imageFile = File(URIpath)
-     /*   val imageUri: Uri = FileProvider.getUriForFile(
-             requireContext(),
-            "${BuildConfig.APPLICATION_ID}.fileprovider",
-            imageFile
-        )*/
-        val file = File(URIpath)
-        val imageUri =FileProvider.getUriForFile(requireContext(), "${context?.packageName}.fileprovider", file);
-
 
          URIpath?.toString()?.let { uriString ->
             if (uriString.contains("mp4")) {
-               val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(imageUri, "video/mp4")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                if (intent.resolveActivity(packageManager) != null) {
-                    startActivity(intent)
-                }
-            } else {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(imageUri, "image/jpeg")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                if (intent.resolveActivity(packageManager) != null) {
-                    startActivity(intent)
-                }
-             }
-        }
+                val fileUri = FileProvider.getUriForFile(requireContext(), "${context?.packageName}.fileprovider", imageFile)
 
-    }
+                Log.d("FilePathrror"," video uri "+imageFile+" uri "+fileUri)
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    Log.d("FilePathrror"," come to intent ")
+                                      setDataAndType(fileUri, "video/mp4")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                Log.d("FilePathrror"," intent "+intent.resolveActivity(packageManager))
+                                startActivity(intent)
 
-    private fun playMic() {
-        if (isPlayingMic) {
-            stopPlayMic()
-            return
-        }
-        startPlayMic(object : IPlayCallBack {
-            override fun onBegin() {
-                mViewBinding.voiceBtn.setImageResource(R.mipmap.camera_voice_on)
-                isPlayingMic = true
+
+                        } else {
+                                val file = File(URIpath)
+                                val imageUri =FileProvider.getUriForFile(requireContext(), "${context?.packageName}.fileprovider", file);
+
+                                Log.d("FilePathrror"," image uri "+file+" uri "+imageUri)
+
+
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(imageUri, "image/jpeg")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                if (intent.resolveActivity(packageManager) != null) {
+                                    startActivity(intent)
+                                }
+                        }
+}
+
+}
+
+private fun playMic() {
+if (isPlayingMic) {
+stopPlayMic()
+return
+}
+startPlayMic(object : IPlayCallBack {
+override fun onBegin() {
+mViewBinding.voiceBtn.setImageResource(R.mipmap.camera_voice_on)
+isPlayingMic = true
+}
+
+override fun onError(error: String) {
+mViewBinding.voiceBtn.setImageResource(R.mipmap.camera_voice_off)
+isPlayingMic = false
+}
+
+override fun onComplete() {
+mViewBinding.voiceBtn.setImageResource(R.mipmap.camera_voice_off)
+isPlayingMic = false
+}
+})
+}
+
+private fun showRecentMedia(isImage: Boolean? = null) {
+lifecycleScope.launch(Dispatchers.IO) {
+context ?: return@launch
+if (! isFragmentAttached()) {
+return@launch
+}
+try {
+if (isImage != null) {
+    MediaUtils.findRecentMedia(requireContext(), isImage)
+} else {
+    MediaUtils.findRecentMedia(requireContext())
+}?.also { path ->
+    val size = Utils.dp2px(requireContext(), 38F)
+    ImageLoaders.of(this@DemoFragment)
+        .loadAsBitmap(path, size, size, object : ILoader.OnLoadedResultListener {
+            override fun onLoadedSuccess(bitmap: Bitmap?) {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    mViewBinding.albumPreviewIv.canShowImageBorder = true
+                    mViewBinding.albumPreviewIv.setImageBitmap(bitmap)
+                    URIpath = path;
+                  //  ToastUtils.show(path)
+                }
             }
 
-            override fun onError(error: String) {
-                mViewBinding.voiceBtn.setImageResource(R.mipmap.camera_voice_off)
-                isPlayingMic = false
-            }
-
-            override fun onComplete() {
-                mViewBinding.voiceBtn.setImageResource(R.mipmap.camera_voice_off)
-                isPlayingMic = false
+            override fun onLoadedFailed(error: Exception?) {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    mViewBinding.albumPreviewIv.cancelAnimation()
+                }
             }
         })
-    }
+}
+} catch (e: Exception) {
+activity?.runOnUiThread {
+    Log.d("FilePathrror"," main errri "+e.message)
+    ToastUtils.show("${e.localizedMessage}")
+}
+Logger.e(TAG, "showRecentMedia failed", e)
+}
+}
+}
 
-    private fun showRecentMedia(isImage: Boolean? = null) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            context ?: return@launch
-            if (! isFragmentAttached()) {
-                return@launch
-            }
-            try {
-                if (isImage != null) {
-                    MediaUtils.findRecentMedia(requireContext(), isImage)
-                } else {
-                    MediaUtils.findRecentMedia(requireContext())
-                }?.also { path ->
-                    val size = Utils.dp2px(requireContext(), 38F)
-                    ImageLoaders.of(this@DemoFragment)
-                        .loadAsBitmap(path, size, size, object : ILoader.OnLoadedResultListener {
-                            override fun onLoadedSuccess(bitmap: Bitmap?) {
-                                lifecycleScope.launch(Dispatchers.Main) {
-                                    mViewBinding.albumPreviewIv.canShowImageBorder = true
-                                    mViewBinding.albumPreviewIv.setImageBitmap(bitmap)
-                                    URIpath = path;
-                                  //  ToastUtils.show(path)
-                                }
-                            }
+private fun updateCameraModeSwitchUI() {
+mViewBinding.modeSwitchLayout.children.forEach { it ->
+val tabTv = it as TextView
+val isSelected = tabTv.id == mCameraModeTabMap[mCameraMode]
+val typeface = if (isSelected) Typeface.BOLD else Typeface.NORMAL
+tabTv.typeface = Typeface.defaultFromStyle(typeface)
+if (isSelected) {
+0xFFFFFFFF
+} else {
+0xFFD7DAE1
+}.also {
+tabTv.setTextColor(it.toInt())
+}
+tabTv.setShadowLayer(
+Utils.dp2px(requireContext(), 1F).toFloat(),
+0F,
+0F,
+0xBF000000.toInt()
+)
 
-                            override fun onLoadedFailed(error: Exception?) {
-                                lifecycleScope.launch(Dispatchers.Main) {
-                                    mViewBinding.albumPreviewIv.cancelAnimation()
-                                }
-                            }
-                        })
-                }
-            } catch (e: Exception) {
-                activity?.runOnUiThread {
-                    ToastUtils.show("${e.localizedMessage}")
-                }
-                Logger.e(TAG, "showRecentMedia failed", e)
-            }
-        }
-    }
+if (isSelected) {
+R.mipmap.camera_preview_dot_blue
+} else {
+R.drawable.camera_bottom_dot_transparent
+}.also {
+TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(tabTv, 0, 0, 0, it)
+}
+tabTv.compoundDrawablePadding = 1
+}
+mViewBinding.captureBtn.setCaptureViewTheme(CaptureMediaView.CaptureViewTheme.THEME_WHITE)
+val height = mViewBinding.controlPanelLayout.height
+mViewBinding.captureBtn.setCaptureMode(mCameraMode)
+if (mCameraMode == CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC) {
+val translationX = ObjectAnimator.ofFloat(
+mViewBinding.controlPanelLayout,
+"translationY",
+height.toFloat(),
+0.0f
+)
+translationX.duration = 600
+translationX.addListener(object : AnimatorListenerAdapter() {
+override fun onAnimationEnd(animation: Animator) {
+    super.onAnimationEnd(animation)
+    mViewBinding.controlPanelLayout.visibility = View.VISIBLE
 
-    private fun updateCameraModeSwitchUI() {
-        mViewBinding.modeSwitchLayout.children.forEach { it ->
-            val tabTv = it as TextView
-            val isSelected = tabTv.id == mCameraModeTabMap[mCameraMode]
-            val typeface = if (isSelected) Typeface.BOLD else Typeface.NORMAL
-            tabTv.typeface = Typeface.defaultFromStyle(typeface)
-            if (isSelected) {
-                0xFFFFFFFF
-            } else {
-                0xFFD7DAE1
-            }.also {
-                tabTv.setTextColor(it.toInt())
-            }
-            tabTv.setShadowLayer(
-                Utils.dp2px(requireContext(), 1F).toFloat(),
-                0F,
-                0F,
-                0xBF000000.toInt()
-            )
+}
 
-            if (isSelected) {
-                R.mipmap.camera_preview_dot_blue
-            } else {
-                R.drawable.camera_bottom_dot_transparent
-            }.also {
-                TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(tabTv, 0, 0, 0, it)
-            }
-            tabTv.compoundDrawablePadding = 1
-        }
-        mViewBinding.captureBtn.setCaptureViewTheme(CaptureMediaView.CaptureViewTheme.THEME_WHITE)
-        val height = mViewBinding.controlPanelLayout.height
-        mViewBinding.captureBtn.setCaptureMode(mCameraMode)
-        if (mCameraMode == CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC) {
-            val translationX = ObjectAnimator.ofFloat(
-                mViewBinding.controlPanelLayout,
-                "translationY",
-                height.toFloat(),
-                0.0f
-            )
-            translationX.duration = 600
-            translationX.addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    super.onAnimationEnd(animation)
-                    mViewBinding.controlPanelLayout.visibility = View.VISIBLE
+/*  override fun onAnimationStart(animation: Animator?) {
+    super.onAnimationStart(animation)
+    mViewBinding.controlPanelLayout.visibility = View.VISIBLE
+}*/
+})
+translationX.start()
+} else {
+val translationX = ObjectAnimator.ofFloat(
+mViewBinding.controlPanelLayout,
+"translationY",
+0.0f,
+height.toFloat()
+)
+translationX.duration = 600
+translationX.addListener(object : AnimatorListenerAdapter() {
+override fun onAnimationEnd(animation: Animator) {
+    super.onAnimationEnd(animation)
+    mViewBinding.controlPanelLayout.visibility = View.INVISIBLE
 
-                }
+}
 
-              /*  override fun onAnimationStart(animation: Animator?) {
-                    super.onAnimationStart(animation)
-                    mViewBinding.controlPanelLayout.visibility = View.VISIBLE
-                }*/
-            })
-            translationX.start()
-        } else {
-            val translationX = ObjectAnimator.ofFloat(
-                mViewBinding.controlPanelLayout,
-                "translationY",
-                0.0f,
-                height.toFloat()
-            )
-            translationX.duration = 600
-            translationX.addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    super.onAnimationEnd(animation)
-                    mViewBinding.controlPanelLayout.visibility = View.INVISIBLE
+/*override fun onAnimationEnd(animation: Animator?) {
+    super.onAnimationEnd(animation)
+    mViewBinding.controlPanelLayout.visibility = View.INVISIBLE
+}*/
+})
+translationX.start()
+}
+}
 
-                }
+private fun clickAnimation(v: View, listener: Animator.AnimatorListener) {
+val scaleXAnim: ObjectAnimator = ObjectAnimator.ofFloat(v, "scaleX", 1.0f, 0.4f, 1.0f)
+val scaleYAnim: ObjectAnimator = ObjectAnimator.ofFloat(v, "scaleY", 1.0f, 0.4f, 1.0f)
+val alphaAnim: ObjectAnimator = ObjectAnimator.ofFloat(v, "alpha", 1.0f, 0.4f, 1.0f)
+val animatorSet = AnimatorSet()
+animatorSet.duration = 150
+animatorSet.addListener(listener)
+animatorSet.playTogether(scaleXAnim, scaleYAnim, alphaAnim)
+animatorSet.start()
+}
 
-                /*override fun onAnimationEnd(animation: Animator?) {
-                    super.onAnimationEnd(animation)
-                    mViewBinding.controlPanelLayout.visibility = View.INVISIBLE
-                }*/
-            })
-            translationX.start()
-        }
-    }
+private fun showMoreMenu() {
+if (mMoreMenu == null) {
+layoutInflater.inflate(R.layout.dialog_more, null).apply {
+mMoreBindingView = DialogMoreBinding.bind(this)
+mMoreBindingView.multiplex.setOnClickListener(this@DemoFragment)
+mMoreBindingView.multiplexText.setOnClickListener(this@DemoFragment)
+mMoreBindingView.contact.setOnClickListener(this@DemoFragment)
+mMoreBindingView.contactText.setOnClickListener(this@DemoFragment)
+mMoreBindingView.resolution.setOnClickListener(this@DemoFragment)
+mMoreBindingView.resolutionText.setOnClickListener(this@DemoFragment)
+mMoreBindingView.contract.setOnClickListener(this@DemoFragment)
+mMoreBindingView.contractText.setOnClickListener(this@DemoFragment)
+mMoreMenu = PopupWindow(
+    this,
+    ViewGroup.LayoutParams.MATCH_PARENT,
+    ViewGroup.LayoutParams.WRAP_CONTENT,
+    true
+).apply {
+    isOutsideTouchable = true
+    setBackgroundDrawable(
+        ContextCompat.getDrawable(requireContext(), R.mipmap.camera_icon_one_inch_alpha)
+    )
+}
+}
+}
+try {
+mMoreMenu?.showAsDropDown(mViewBinding.settingsBtn, 0, 0, Gravity.START)
+} catch (e: Exception) {
+Logger.e(TAG, "showMoreMenu fail", e)
+}
+}
 
-    private fun clickAnimation(v: View, listener: Animator.AnimatorListener) {
-        val scaleXAnim: ObjectAnimator = ObjectAnimator.ofFloat(v, "scaleX", 1.0f, 0.4f, 1.0f)
-        val scaleYAnim: ObjectAnimator = ObjectAnimator.ofFloat(v, "scaleY", 1.0f, 0.4f, 1.0f)
-        val alphaAnim: ObjectAnimator = ObjectAnimator.ofFloat(v, "alpha", 1.0f, 0.4f, 1.0f)
-        val animatorSet = AnimatorSet()
-        animatorSet.duration = 150
-        animatorSet.addListener(listener)
-        animatorSet.playTogether(scaleXAnim, scaleYAnim, alphaAnim)
-        animatorSet.start()
-    }
-
-    private fun showMoreMenu() {
-        if (mMoreMenu == null) {
-            layoutInflater.inflate(R.layout.dialog_more, null).apply {
-                mMoreBindingView = DialogMoreBinding.bind(this)
-                mMoreBindingView.multiplex.setOnClickListener(this@DemoFragment)
-                mMoreBindingView.multiplexText.setOnClickListener(this@DemoFragment)
-                mMoreBindingView.contact.setOnClickListener(this@DemoFragment)
-                mMoreBindingView.contactText.setOnClickListener(this@DemoFragment)
-                mMoreBindingView.resolution.setOnClickListener(this@DemoFragment)
-                mMoreBindingView.resolutionText.setOnClickListener(this@DemoFragment)
-                mMoreBindingView.contract.setOnClickListener(this@DemoFragment)
-                mMoreBindingView.contractText.setOnClickListener(this@DemoFragment)
-                mMoreMenu = PopupWindow(
-                    this,
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    true
-                ).apply {
-                    isOutsideTouchable = true
-                    setBackgroundDrawable(
-                        ContextCompat.getDrawable(requireContext(), R.mipmap.camera_icon_one_inch_alpha)
-                    )
-                }
-            }
-        }
-        try {
-            mMoreMenu?.showAsDropDown(mViewBinding.settingsBtn, 0, 0, Gravity.START)
-        } catch (e: Exception) {
-            Logger.e(TAG, "showMoreMenu fail", e)
-        }
-    }
-
-    private fun startMediaTimer() {
-        val pushTask: TimerTask = object : TimerTask() {
-            override fun run() {
-                //秒
-                mRecSeconds++
-                //分
-                if (mRecSeconds >= 60) {
-                    mRecSeconds = 0
-                    mRecMinute++
-                }
-                //时
-                if (mRecMinute >= 60) {
-                    mRecMinute = 0
-                    mRecHours++
-                    if (mRecHours >= 24) {
-                        mRecHours = 0
-                        mRecMinute = 0
-                        mRecSeconds = 0
-                    }
-                }
-                mMainHandler.sendEmptyMessage(WHAT_START_TIMER)
-            }
-        }
-        if (mRecTimer != null) {
-            stopMediaTimer()
-        }
-        mRecTimer = Timer()
-        //执行schedule后1s后运行run，之后每隔1s运行run
-        mRecTimer?.schedule(pushTask, 1000, 1000)
-    }
-
-    private fun stopMediaTimer() {
-        if (mRecTimer != null) {
-            mRecTimer?.cancel()
-             mRecTimer = null
-        }
+private fun startMediaTimer() {
+val pushTask: TimerTask = object : TimerTask() {
+override fun run() {
+//秒
+mRecSeconds++
+//分
+if (mRecSeconds >= 60) {
+    mRecSeconds = 0
+    mRecMinute++
+}
+//时
+if (mRecMinute >= 60) {
+    mRecMinute = 0
+    mRecHours++
+    if (mRecHours >= 24) {
         mRecHours = 0
         mRecMinute = 0
         mRecSeconds = 0
-        mMainHandler.sendEmptyMessage(WHAT_STOP_TIMER)
     }
+}
+mMainHandler.sendEmptyMessage(WHAT_START_TIMER)
+}
+}
+if (mRecTimer != null) {
+stopMediaTimer()
+}
+mRecTimer = Timer()
+//执行schedule后1s后运行run，之后每隔1s运行run
+mRecTimer?.schedule(pushTask, 1000, 1000)
+}
 
-    private fun calculateTime(seconds: Int, minute: Int, hour: Int? = null): String {
-        val mBuilder = java.lang.StringBuilder()
-        //时
-        if (hour != null) {
-            if (hour < 10) {
-                mBuilder.append("0")
-                mBuilder.append(hour)
-            } else {
-                mBuilder.append(hour)
-            }
-            mBuilder.append(":")
-        }
-        // 分
-        if (minute < 10) {
-            mBuilder.append("0")
-            mBuilder.append(minute)
-        } else {
-            mBuilder.append(minute)
-        }
-        //秒
-        mBuilder.append(":")
-        if (seconds < 10) {
-            mBuilder.append("0")
-            mBuilder.append(seconds)
-        } else {
-            mBuilder.append(seconds)
-        }
-        return mBuilder.toString()
-    }
+private fun stopMediaTimer() {
+if (mRecTimer != null) {
+mRecTimer?.cancel()
+mRecTimer = null
+}
+mRecHours = 0
+mRecMinute = 0
+mRecSeconds = 0
+mMainHandler.sendEmptyMessage(WHAT_STOP_TIMER)
+}
 
-    companion object {
-        const val REQUEST_MANAGE_EXTERNAL_STORAGE = 101
-        private const val TAG  = "DemoFragment"
-        private const val WHAT_START_TIMER = 0x00
-        private const val WHAT_STOP_TIMER = 0x01
-    }
+private fun calculateTime(seconds: Int, minute: Int, hour: Int? = null): String {
+val mBuilder = java.lang.StringBuilder()
+//时
+if (hour != null) {
+if (hour < 10) {
+mBuilder.append("0")
+mBuilder.append(hour)
+} else {
+mBuilder.append(hour)
+}
+mBuilder.append(":")
+}
+// 分
+if (minute < 10) {
+mBuilder.append("0")
+mBuilder.append(minute)
+} else {
+mBuilder.append(minute)
+}
+//秒
+mBuilder.append(":")
+if (seconds < 10) {
+mBuilder.append("0")
+mBuilder.append(seconds)
+} else {
+mBuilder.append(seconds)
+}
+return mBuilder.toString()
+}
+
+companion object {
+const val REQUEST_MANAGE_EXTERNAL_STORAGE = 101
+private const val TAG  = "DemoFragment"
+private const val WHAT_START_TIMER = 0x00
+private const val WHAT_STOP_TIMER = 0x01
+}
 }
 

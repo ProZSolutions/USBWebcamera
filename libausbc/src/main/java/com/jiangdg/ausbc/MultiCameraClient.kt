@@ -1006,8 +1006,8 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             return CameraRequest.Builder()
               /*   .setPreviewWidth(1600)
                 .setPreviewHeight(1200)*/
-                 .setPreviewWidth(640)
-                .setPreviewHeight(480)
+                 .setPreviewWidth(1280)
+                .setPreviewHeight(720)
                 .create()
         }
     }
@@ -1021,8 +1021,8 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         private const val MSG_CAPTURE_VIDEO_STOP = 0x05
         private const val MSG_CAPTURE_STREAM_START = 0x06
         private const val MSG_CAPTURE_STREAM_STOP = 0x07
-        private const val DEFAULT_PREVIEW_WIDTH = 640
-        private const val DEFAULT_PREVIEW_HEIGHT = 480
+        private const val DEFAULT_PREVIEW_WIDTH = 1280
+        private const val DEFAULT_PREVIEW_HEIGHT = 720
         const val MAX_NV21_DATA = 5
         const val CAPTURE_TIMES_OUT_SEC = 3L
     }

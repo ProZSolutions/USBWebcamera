@@ -134,7 +134,7 @@ class GlSurfaceFragment: BaseFragment() {
 
     companion object {
         private const val TAG = "GlSurfaceFragment"
-        private const val CAMERA_PREVIEW_WIDTH = 640
-        private const val CAMERA_PREVIEW_HEIGHT = 480
+        private const val CAMERA_PREVIEW_WIDTH = 1280
+        private const val CAMERA_PREVIEW_HEIGHT = 720
     }
 }

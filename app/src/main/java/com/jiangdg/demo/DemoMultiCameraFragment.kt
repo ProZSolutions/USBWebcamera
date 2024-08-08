@@ -179,8 +179,8 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
     private fun getCameraRequest(): CameraRequest {
         Log.d("PreviewOption"," multicamerafrag ");
         return CameraRequest.Builder()
-            .setPreviewWidth(640)
-            .setPreviewHeight(480)
+            .setPreviewWidth(1280)
+            .setPreviewHeight(720)
 
 
 
